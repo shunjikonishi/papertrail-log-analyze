@@ -255,7 +255,7 @@ flect.app.loganalyzer.LogAnalyzer = function(name, timeOffset) {
 				barMax = v1;
 			}
 		}
-		Flotr.draw(document.getElementById("mainChart"), [data1, data2], {
+		Flotr.draw(document.getElementById("mainChart"), [data1], {
 			"bars" : {
 				"show" : true,
 				"horizontal" : false,
