@@ -4,7 +4,6 @@ import play.api._;
 import play.api.mvc._;
 import play.api.data.Form;
 import play.api.data.Forms._;
-import play.api.cache.Cache;
 import play.api.Play.current;
 import play.api.libs.concurrent.Akka;
 import play.api.libs.json.Json.toJson;
@@ -24,7 +23,14 @@ import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 
 import jp.co.flect.papertrail.LogAnalyzer;
+import jp.co.flect.papertrail.Counter;
 import jp.co.flect.net.IPFilter;
+
+import models.JqGrid;
+import models.CacheManager;
+import models.CacheManager.CacheStatus;
+import models.CacheManager.Summary;
+import models.CacheManager.DateKey;
 
 object Application extends Controller {
 	
@@ -58,6 +64,13 @@ object Application extends Controller {
 		}
 	}
 	
+	private def bucketCheck(name: String)(f: ArchiveInfo => Result) = {
+		Buckets.get(name) match {
+			case Some(info) => f(info);
+			case None => NotFound;
+		}
+	}
+	
 	private val AccessKey = System.getenv("S3_ACCESSKEY");
 	private val SecretKey = System.getenv("S3_SECRETKEY");
 	private val Buckets = System.getenv()
@@ -72,15 +85,6 @@ object Application extends Controller {
 			}
 			(newKey, newValue);
 		};
-	
-	case class DateKey(year: Int, month: Int, date: Int) {
-		def toDateStr = {
-			"%d-%02d-%02d".format(year, month, date);
-		}
-		def toDirectory = {
-			"/dt=%d-%02d-%02d".format(year, month, date);
-		}
-	};
 	
 	private val dateForm = Form(mapping(
 		"year" -> number,
@@ -99,56 +103,55 @@ object Application extends Controller {
 		}
 	}
 	
-	def logcount(name: String) = filterAction { implicit request =>
-		Buckets.get(name) match {
-			case Some(info) => 
-				val key = dateForm.bindFromRequest;
-				if (key.hasErrors) {
-					Ok(toJson(jqGrid.empty));
-				} else {
-					val csv = info.getCache(key.get);
-					csv match {
-						case Some(str) => 
-							Ok(toJson(jqGrid.data(str)));
-						case None =>
-							NotFound;
-					}
+	def logcount(name: String) = jqGridData(name, Counter.Type.Count);
+	def responsetime(name: String) = jqGridData(name, Counter.Type.Time);
+	
+	private def jqGridData(name: String, counterType: Counter.Type) = filterAction { implicit request =>
+		bucketCheck(name) { info =>
+			val key = dateForm.bindFromRequest;
+			if (key.hasErrors) {
+				Ok(toJson(JqGrid.empty));
+			} else {
+				val summary = CacheManager(info.name).get(key.get);
+				summary.status match {
+					case CacheStatus.Ready =>
+						Ok(toJson(JqGrid.data(summary.csv(counterType))));
+					case _ =>
+						NotFound;
 				}
-			case _ => NotFound;
+			}
 		}
 	}
 	
 	def show(name: String, year: Int, month: Int, date: Int) = filterAction { implicit request =>
-		Buckets.get(name) match {
-			case Some(info) => 
-				val key = DateKey(year, month, date);
-				val csv = info.getCache(key);
-				csv match {
-					case Some(str) => 
-						Ok(str);
-					case None =>
-						NotFound;
-				}
-			case _ => NotFound;
+		bucketCheck(name) { info =>
+			val key = DateKey(year, month, date);
+			val summary = CacheManager(info.name).get(key);
+			summary.status match {
+				case CacheStatus.Ready =>
+					Ok(summary.fullcsv);
+				case _ =>
+					NotFound;
+			}
 		}
 	}
 	
-	
 	def status(name: String) = filterAction { implicit request =>
-		Buckets.get(name) match {
-			case Some(info) => 
-				val key = dateForm.bindFromRequest.get
-				val csv = info.getCache(key);
-				csv match {
-					case Some(str) => 
-						if (str == "found") Ok(str);
-						else if (str == "error") {
-							info.removeCache(key);
-							Ok(str);
-						} else Ok("ready");
-					case None => checkS3(info, key);
-				}
-			case _ => NotFound;
+		bucketCheck(name) { info =>
+			val man = CacheManager(info.name);
+			val key = dateForm.bindFromRequest.get;
+			val summary = man.get(key);
+			summary.status match {
+				case CacheStatus.Unprocessed =>
+					checkS3(info, key);
+				case CacheStatus.Found | CacheStatus.Ready =>
+					Ok(summary.status.toString);
+				case CacheStatus.Error =>
+					man.remove(key);
+					Ok(summary.status.toString);
+				case CacheStatus.NotFound =>
+					throw new IllegalStateException();
+			}
 		}
 	}
 	
@@ -156,13 +159,14 @@ object Application extends Controller {
 		val client = new AmazonS3Client(new BasicAWSCredentials(AccessKey, SecretKey));
 		val list = client.listObjects(info.bucket, info.directory + key.toDirectory);
 		if (list.getObjectSummaries() == null || list.getObjectSummaries().size() == 0) {
-			Ok("notFound");
+			Ok(CacheStatus.NotFound.toString);
 		} else {
-			info.putCache(key, "found");
+			val summary = new Summary(CacheStatus.Found, null, null);
+			CacheManager(info.name).put(key, summary);
 			Akka.future {
 				processCSV(client, info, list, key);
 			}
-			Ok("found");
+			Ok(CacheStatus.Found.toString);
 		}
 	}
 	
@@ -177,7 +181,7 @@ object Application extends Controller {
 			} catch {
 				case e: Exception => 
 					e.printStackTrace();
-					info.putCache(key, "error");
+					CacheManager(info.name).put(key, Summary(CacheStatus.Error));
 			}
 		}
 	}
@@ -214,63 +218,20 @@ object Application extends Controller {
 			"-s3", AccessKey, SecretKey, info.bucket, info.directory, key.toDateStr
 		);
 		val analyzer = LogAnalyzer.process(args);
-		val csv = analyzer.toString;
-		val data = csv.getBytes("utf-8");
+		val countCsv = analyzer.toString(Counter.Type.Count);
+		val timeCsv = analyzer.toString(Counter.Type.Time);
+		val summary = Summary(CacheStatus.Ready, countCsv, timeCsv);
+		/*
+		val data = summary.fullcsv.getBytes("utf-8");
 		val meta = new ObjectMetadata();
 		meta.setContentLength(data.length);
-		/*
 		client.putObject(Bucket, Base + key + "/summary.csv", 
 			new ByteArrayInputStream(data),
 			meta);
 		*/
-		info.putCache(key, csv);
+		CacheManager(info.name).put(key, summary);
 	}
 	
-	case class ArchiveInfo(name: String, bucket: String, directory: String) {
-		def getCache(key: DateKey) = {
-			Cache.getAs[String](name + "-" + key.toDateStr);
-		}
-		
-		def putCache(key: DateKey, data: String) = {
-			Cache.set(name + "-" + key.toDateStr, data);
-		}
-		def removeCache(key: DateKey) = {
-			Cache.remove(name + "-" + key.toDateStr);
-		}
-	}
-	
-	object jqGrid {
-		
-		def empty = {
-			Map(
-				"start" -> toJson(1),
-				"total" -> toJson(0),
-				"page" -> toJson(1),
-				"records" -> toJson(0),
-				"rows" -> toJson(new Array[JsValue](0))
-			);
-		}
-		
-		def data(csv: String) = {
-			var idx = 0;
-			val rows = csv.split("\n");
-			val data = rows.map{ row =>
-				val cols = row.split(",");
-				idx += 1;
-				Map(
-					"id" -> toJson("log-" + idx),
-					"cell" -> toJson(cols)
-				);
-			};
-			Map(
-				"start" -> toJson(1),
-				"total" -> toJson(1),
-				"page" -> toJson(1),
-				"records" -> toJson(rows.size),
-				"rows" -> toJson(data)
-			);
-		}
-		
-	}
+	case class ArchiveInfo(name: String, bucket: String, directory: String);
 	
 }

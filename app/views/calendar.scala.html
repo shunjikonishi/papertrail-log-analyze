@@ -17,6 +17,12 @@
 	height: 100%;
 	float: left;
 }
+#mainChart {
+	margin: 10px;
+	float: right;
+	width: 600px;
+	height: 200px;
+}
 #message {
 	position: absolute;
 	left: 50%;
@@ -40,10 +46,12 @@
 	margin: 20px 20px;
 	width: 95%;
 }
+
 </style>
 <script type='text/javascript' src='@routes.Assets.at("javascripts/ext/fullcalendar/fullcalendar.js")'></script>
 <script type='text/javascript' src='@routes.Assets.at("javascripts/ext/jqgrid/js/i18n/grid.locale-en.js")'></script>
 <script type='text/javascript' src='@routes.Assets.at("javascripts/ext/jqgrid/js/jquery.jqGrid.src.js")'></script>
+<script type='text/javascript' src='@routes.Assets.at("javascripts/ext/flotr2/flotr2.min.js")'></script>
 <script type='text/javascript' src='@routes.Assets.at("javascripts/loganalyzer.js")'></script>
 <script>
 
@@ -51,11 +59,12 @@ var app;
 $(document).ready(function() {
 	$.fn.button.noConflict();
 	var name = "@name";
-	app = new flect.app.loganalyzer.LogAnalyzer(name);
+	app = new flect.app.loganalyzer.LogAnalyzer(name, 9);
 });
 </script>
 <div id="control">
 	<div id="calendar"></div>
+	<div id="mainChart"></div>
 	<!--
 	<button class="btn btn-primary">Test</button>
 	-->
@@ -64,7 +73,11 @@ $(document).ready(function() {
 <div id="workspace">
 	<div>
 		<table id="cntGrid"></table>
+	</div>
+	<p></p>
 	<div>
+		<table id="timeGrid"></table>
+	</div>
 </div>
 <div id="message"><div>@Messages("analyzing")<div></div>
 }
