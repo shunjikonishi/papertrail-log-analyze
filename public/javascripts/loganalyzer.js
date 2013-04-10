@@ -27,7 +27,8 @@ flect.app.loganalyzer.CacheStatus = function() {
 flect.app.loganalyzer.LogAnalyzer = function(name, timeOffset) {
 	var cntGrid, timeGrid, calendar,
 		CacheStatus = new flect.app.loganalyzer.CacheStatus(),
-		cntGridLoaded = false, timeGridLoaded = false;
+		cntGridLoaded = false, timeGridLoaded = false,
+		cntChartData, timeChartData;
 	init();
 	
 	function init() {
@@ -106,12 +107,10 @@ flect.app.loganalyzer.LogAnalyzer = function(name, timeOffset) {
 				afterLoad();
 			},
 			"onSelectRow" : function(rowid, status, e) {
-				/*
 				if (rowid && status) {
-					var data = $("#cellname-grid").getRowData(rowid);
-					cellHighlight(data.name);
+					cntChartData = cntGrid.getRowData(rowid);
+					drawChart();
 				}
-				*/
 			}
 		});
 		timeGrid = $("#timeGrid").jqGrid({
@@ -119,7 +118,7 @@ flect.app.loganalyzer.LogAnalyzer = function(name, timeOffset) {
 			"url" : "/" + name + "/responsetime",
 			"datatype" : "json",
 			"mtype" : "POST",
-			"colNames" : cntLabels,
+			"colNames" : timeLabels,
 			"colModel" : colModel,
 			"rowNum" : 1000,
 			"rownumbers" : false,
@@ -132,27 +131,17 @@ flect.app.loganalyzer.LogAnalyzer = function(name, timeOffset) {
 				afterLoad();
 			},
 			"onSelectRow" : function(rowid, status, e) {
-				/*
 				if (rowid && status) {
-					var data = $("#cellname-grid").getRowData(rowid);
-					cellHighlight(data.name);
+					cntChartData = timeGrid.getRowData(rowid);
+					timeChartData = cntChartData;
+					drawChart();
 				}
-				*/
 			}
 		});
 		var groupHeaders = [];
 		for (var i=0; i<25; i++) {
 			var suffix = i == 0 ? "All" : i;
-			var title = i + timeOffset - 1;
-			if (i == 0) {
-				title = "Total";
-			} else if (title < 0) {
-				title = (title + 24) + ":00";
-			} else if (title < 24) {
-				title += ":00";
-			} else {
-				title = (title - 24) + ":00";
-			}
+			var title = i == 0 ? "Total" : convertTime(i);
 			groupHeaders.push({
 				"startColumnName" : "cnt" + suffix,
 				"numberOfColumns" : 3,
@@ -167,6 +156,15 @@ flect.app.loganalyzer.LogAnalyzer = function(name, timeOffset) {
 			"useColSpanStyle" : true, 
 			"groupHeaders" : groupHeaders
 		}).jqGrid('setFrozenColumns');
+	}
+	function convertTime(n) {
+		var time = n + timeOffset - 1;
+		if (time < 0) {
+			time += 24;
+		} else if (time >= 24) {
+			time -= 24;
+		}
+		return time + ":00";
 	}
 	function highlight(td) {
 		calendar.find(".fc-state-highlight").removeClass("fc-state-highlight");
@@ -185,7 +183,6 @@ flect.app.loganalyzer.LogAnalyzer = function(name, timeOffset) {
 			},
 			"type" : "POST",
 			"success" : function(data) {
-//console.log("test: " + data);
 				var cs = CacheStatus.fromName(data);
 				switch (cs) {
 					case CacheStatus.Ready:
@@ -215,6 +212,8 @@ flect.app.loganalyzer.LogAnalyzer = function(name, timeOffset) {
 	function loadData(year, month, day, td) {
 		cntGridLoaded = false;
 		timeGridLoaded = false;
+		cntChartData = null;
+		timeChartData = null;
 		
 		cntGrid.jqGrid("setGridParam", {
 			"postData" : {
@@ -236,40 +235,67 @@ flect.app.loganalyzer.LogAnalyzer = function(name, timeOffset) {
 		if (cntGridLoaded && timeGridLoaded) {
 			cntGridLoaded = false;
 			timeGridLoaded = false;
-//			setTimeout(drawMainChart, 0);
+			setTimeout(drawInitialChart, 0);
 		}
 	}
-	function drawMainChart() {
-		var cntData = cntGrid.jqGrid("getRowData", "log-2"),
-			timeData = timeGrid.jqGrid("getRowData", "log-2");
-		if (!cntData.name || !timeData.name) {
+	function drawInitialChart() {
+		cntChartData = cntGrid.jqGrid("getRowData", "log-2"),
+		timeChartData = timeGrid.jqGrid("getRowData", "log-2");
+		drawChart();
+	}
+	function drawChart() {
+		if (!cntChartData || !cntChartData.name || !timeChartData || !timeChartData.name) {
 			return;
 		}
-		var data1 = [], data2 = [], barMax = 0;
-		for (var i=1;i<=24; i++) {
-			var v1 = cntData["cnt" + i];
-			var v2 = timeData["cnt" + i];
-			data1.push([i - 1, v1]);
-			data2.push([i - 1, v2]);
-			if (barMax < v1) {
-				barMax = v1;
-			}
-		}
-		Flotr.draw(document.getElementById("mainChart"), [data1], {
+		var bar1 = {
+			"data" : [],
 			"bars" : {
 				"show" : true,
 				"horizontal" : false,
 				"shadowSize" : 0,
 				"barWidth" : 0.8
-			},
+			}
+		}, line1 = {
+			"data" : [],
+			"label" : "Average",
+			"yaxis" : 2,
+			"lines" : {
+				"show" : true
+			}
+		},ticks = [];
+		for (var i=1;i<=24; i++) {
+			var v1 = parseInt(cntChartData["cnt" + i], 10);
+			var v2 = parseInt(timeChartData["ms" + i], 10);
+			bar1.data.push([i - 1, v1]);
+			line1.data.push([i - 1, v2]);
+			ticks.push([i - 1, convertTime(i)]);
+		}
+		Flotr.draw(document.getElementById("mainChart"), [bar1, line1], {
 			"mouse" : {
 				"track" : true,
+				"trackFormatter" : function(obj) {
+					return Math.ceil(obj.y);
+				},
 				"relative" : true
+			},
+			"xaxis" : {
+				"ticks" : ticks,
+				"labelsAngle" : 45
 			},
 			"yaxis" : {
 				"min" : 0,
+				"title" : "Count",
+				"titleAngle" : 90,
+				"autoscaleMargin" : 1,
+			},
+			"y2axis" : {
+				"color" : "#FF0000",
+				"min" : 0,
+				"title" : "Time(ms)",
+				"titleAngle" : -90,
 				"autoscaleMargin" : 1
-			}
+			},
+			"HtmlText" : false
 		});
 	}
 }

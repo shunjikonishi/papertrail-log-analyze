@@ -7,20 +7,23 @@
 #control {
 	margin: 5px;
 	width: 100%;
-	height:100%;
+	height:200px;
 }
 #control button {
 	margin: 5px;
 }
 #calendar {
+	position: absolute;
+	left: 10px;
+	top: 10px;
 	width:350px;
 	height: 100%;
-	float: left;
 }
 #mainChart {
-	margin: 10px;
-	float: right;
-	width: 600px;
+	position: absolute;
+	left: 370px;
+	top: 10px;
+	width: 800px;
 	height: 200px;
 }
 #message {
@@ -51,7 +54,7 @@
 <script type='text/javascript' src='@routes.Assets.at("javascripts/ext/fullcalendar/fullcalendar.js")'></script>
 <script type='text/javascript' src='@routes.Assets.at("javascripts/ext/jqgrid/js/i18n/grid.locale-en.js")'></script>
 <script type='text/javascript' src='@routes.Assets.at("javascripts/ext/jqgrid/js/jquery.jqGrid.src.js")'></script>
-<script type='text/javascript' src='@routes.Assets.at("javascripts/ext/flotr2/flotr2.min.js")'></script>
+<script type='text/javascript' src='@routes.Assets.at("javascripts/ext/flotr2/flotr2.js")'></script>
 <script type='text/javascript' src='@routes.Assets.at("javascripts/loganalyzer.js")'></script>
 <script>
 
