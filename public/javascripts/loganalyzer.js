@@ -51,12 +51,14 @@ flect.app.loganalyzer.LogAnalyzer = function(name) {
 		}).trigger("reloadGrid");
 	}
 	
-	$('#calendar').fullCalendar({
+	var calendar = $('#calendar').fullCalendar({
 		// put your options and callbacks here
 		"theme" : true,
 		"weekMode" : "liquid",
 		"aspectRatio" : 3,
 		"dayClick" : function(date) {
+			calendar.find(".fc-state-highlight").removeClass("fc-state-highlight");
+			$(this).addClass("fc-state-highlight")
 			status(date);
 		}
 	});
