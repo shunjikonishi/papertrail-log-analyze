@@ -1,0 +1,41 @@
+@(names: scala.collection.Set[String])
+
+@main("Papertrail Log Analyzer") {
+<style type="text/css">
+body {
+	padding-top: 60px;
+	padding-bottom: 40px;
+}
+footer .copy-right {
+	float:right;
+	margin-right: 10px;
+}
+.hero-unit {
+	border: solid 1px;
+}
+</style>
+<div class="container">
+	<!-- Main hero unit for a primary marketing message or call to action -->
+	<div class="hero-unit">
+		<h1>Papertrail Log Analyzer</h1>
+		<p>Papertrailのアーカイブしたログを解析するツールです。</p>
+		<!--
+		<p><a href="/public/manual/ja/manual.html" class="btn btn-primary btn-large">@Messages("viewSource") &raquo;</a></p>
+		-->
+	</div>
+	
+	<!-- Example row of columns -->
+	<div class="row">
+		@names.map{ v =>
+			<div class="span6">
+				<h2><a href="/@v/calendar">@v</a></h2>
+		</div>}
+	</div>
+</div> <!-- /container -->
+<div class="navbar navbar-fixed-bottom">
+	<footer>
+		<div class="copy-right">COPYRIGHT &copy; 2013 FLECT CO.,LTD. ALL RIGHTS RESERVED</div>
+		<div style="clear:both"></div>
+	</footer>
+</div>
+}
