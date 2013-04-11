@@ -1,19 +1,31 @@
 package controllers
 
-import play.api._;
-import play.api.mvc._;
+//import play.api._;
+import play.api.Logger;
+//import play.api.mvc._;
+import play.api.mvc.Controller;
+import play.api.mvc.Action;
+import play.api.mvc.AnyContent;
+import play.api.mvc.Request;
+import play.api.mvc.Result;
 import play.api.data.Form;
-import play.api.data.Forms._;
+//import play.api.data.Forms._;
+import play.api.data.Forms.mapping;
+import play.api.data.Forms.number;
+
 import play.api.Play.current;
 import play.api.libs.concurrent.Akka;
 import play.api.libs.json.Json.toJson;
 import play.api.libs.json.JsValue;
 
-import collection.JavaConversions._;
+//import collection.JavaConversions._;
+import collection.JavaConversions.mapAsScalaMap;
+import collection.JavaConversions.asScalaBuffer;
 
 import java.io.ByteArrayInputStream;
 import java.util.Calendar;
 import java.util.Locale;
+import java.util.TimeZone;
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.BasicAWSCredentials;
@@ -21,6 +33,8 @@ import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.ObjectMetadata;
+
+import org.apache.commons.codec.binary.Base64;
 
 import jp.co.flect.papertrail.LogAnalyzer;
 import jp.co.flect.papertrail.Counter;
@@ -34,33 +48,69 @@ import models.CacheManager.DateKey;
 
 object Application extends Controller {
 	
-	if (System.getenv("LOCALE") != null) {
-		val strs = System.getenv("LOCALE").split("_");
-		val l = strs.length match {
-			case 1 => new Locale(strs(0));
-			case 2 => new Locale(strs(0), strs(1));
-			case 3 => new Locale(strs(0), strs(1), strs(2));
-			case _ => Locale.getDefault();
-		}
-		Locale.setDefault(l);
-	}
 	
-	private val ipFilter = if (System.getenv("ALLOWED_IP") == null) {
-		None;
-	} else {
-		Some(IPFilter.getInstance(System.getenv("ALLOWED_IP")));
-	}
+	//初期設定
+	sys.env.get("LOCALE").foreach { str =>
+		Locale.setDefault(str.split("_").toList match {
+			case lang :: country :: variant :: Nil => new Locale(lang, country, variant);
+			case lang :: country :: Nil => new Locale(lang, country);
+			case lang :: Nil => new Locale(lang);
+			case _ => Locale.getDefault;
+		});
+	};
+	
+	sys.env.get("TIMEZONE").foreach { str =>
+		TimeZone.setDefault(TimeZone.getTimeZone(str));
+	};
+	
+	private val IP_FILTER = sys.env.get("ALLOWED_IP")
+		.map(IPFilter.getInstance(_));
+	
+	private val BASIC_AUTH = sys.env.get("BASIC_AUTHENTICATION")
+		.filter(_.split(":").length == 2)
+		.map { str =>
+			val strs = str.split(":");
+			(strs(0), strs(1));
+		};
 	
 	private def filterAction(f: Request[AnyContent] => Result): Action[AnyContent] = Action {request =>
-		ipFilter match {
-			case Some(filter) =>
-				val ip = request.headers.get("x-forwarded-for").getOrElse(request.remoteAddress);
-				if (filter.allow(ip))
-					f(request);
-				else
-					Forbidden;
-			case None =>
+		def ipFilter = {
+			IP_FILTER match {
+				case Some(filter) =>
+					val ip = request.headers.get("x-forwarded-for").getOrElse(request.remoteAddress);
+					filter.allow(ip);
+				case None =>
+					true;
+			}
+		}
+		def basicAuth = {
+			BASIC_AUTH match {
+				case Some((username, password)) =>
+					request.headers.get("Authorization").map { auth =>
+						auth.split(" ").drop(1).headOption.map { encoded =>
+							new String(Base64.decodeBase64(encoded.getBytes)).split(":").toList match {
+								case u :: p :: Nil => u == username && password == p;
+								case _ => false;
+							}
+						}.getOrElse(false);
+					}.getOrElse {
+						false;
+					}
+				case None =>
+					true;
+			}
+		}
+		val t = System.currentTimeMillis();
+		try {
+			if (!ipFilter) {
+				Forbidden;
+			} else if (!basicAuth) {
+			    Unauthorized.withHeaders("WWW-Authenticate" -> "Basic realm=\"Secured\"");
+			} else {
 				f(request);
+			}
+		} finally {
+			Logger.info(request.path + " (" + (System.currentTimeMillis() - t) + "ms)");
 		}
 	}
 	
@@ -97,9 +147,9 @@ object Application extends Controller {
 	}
 	
 	def calendar(name: String) = filterAction { request =>
-		Buckets.get(name) match {
-			case Some(v) => Ok(views.html.calendar(name));
-			case _ => NotFound;
+		bucketCheck(name) { info =>
+			val offset = TimeZone.getDefault().getRawOffset() / (60 * 60 * 1000);
+			Ok(views.html.calendar(name, offset));
 		}
 	}
 	
@@ -143,7 +193,13 @@ object Application extends Controller {
 			val summary = man.get(key);
 			summary.status match {
 				case CacheStatus.Unprocessed =>
-					checkS3(info, key);
+					try {
+						checkS3(info, key);
+					} catch {
+						case e: Exception => 
+							e.printStackTrace();
+							Ok(CacheStatus.Error.toString);
+					}
 				case CacheStatus.Found | CacheStatus.Ready =>
 					Ok(summary.status.toString);
 				case CacheStatus.Error =>

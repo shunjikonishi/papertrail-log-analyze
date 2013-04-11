@@ -108,8 +108,11 @@ flect.app.loganalyzer.LogAnalyzer = function(name, timeOffset) {
 			},
 			"onSelectRow" : function(rowid, status, e) {
 				if (rowid && status) {
-					cntChartData = cntGrid.getRowData(rowid);
-					drawChart();
+					var data = cntGrid.getRowData(rowid);
+					if (data && data.cnt1) {
+						cntChartData = data;
+						drawChart();
+					}
 				}
 			}
 		});
@@ -132,9 +135,12 @@ flect.app.loganalyzer.LogAnalyzer = function(name, timeOffset) {
 			},
 			"onSelectRow" : function(rowid, status, e) {
 				if (rowid && status) {
-					cntChartData = timeGrid.getRowData(rowid);
-					timeChartData = cntChartData;
-					drawChart();
+					var data = timeGrid.getRowData(rowid);
+					if (data && data.cnt1) {
+						cntChartData = data;
+						timeChartData = data;
+						drawChart();
+					}
 				}
 			}
 		});
@@ -156,6 +162,10 @@ flect.app.loganalyzer.LogAnalyzer = function(name, timeOffset) {
 			"useColSpanStyle" : true, 
 			"groupHeaders" : groupHeaders
 		}).jqGrid('setFrozenColumns');
+		
+		$("#test").click(function() {
+			window.open("/" + name + "/show/2013/4/9");
+		});
 	}
 	function convertTime(n) {
 		var time = n + timeOffset - 1;
@@ -286,6 +296,7 @@ flect.app.loganalyzer.LogAnalyzer = function(name, timeOffset) {
 				"min" : 0,
 				"title" : "Count",
 				"titleAngle" : 90,
+				"tickFormatter" : tickFormatter,
 				"autoscaleMargin" : 1,
 			},
 			"y2axis" : {
@@ -293,9 +304,13 @@ flect.app.loganalyzer.LogAnalyzer = function(name, timeOffset) {
 				"min" : 0,
 				"title" : "Time(ms)",
 				"titleAngle" : -90,
+				"tickFormatter" : tickFormatter,
 				"autoscaleMargin" : 1
 			},
 			"HtmlText" : false
 		});
+		function tickFormatter(val, op) {
+			return Math.ceil(val) + "";
+		}
 	}
 }

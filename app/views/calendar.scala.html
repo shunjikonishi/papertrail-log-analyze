@@ -1,4 +1,4 @@
-@(name: String)
+@(name: String, offset: Int)
 
 @main("Papertrail Log Analyzer") {
 <link rel='stylesheet' type='text/css' href='@routes.Assets.at("javascripts/ext/fullcalendar/fullcalendar.css")' />
@@ -61,16 +61,14 @@
 var app;
 $(document).ready(function() {
 	$.fn.button.noConflict();
-	var name = "@name";
-	app = new flect.app.loganalyzer.LogAnalyzer(name, 9);
+	var name = "@name"
+		offset = @offset;
+	app = new flect.app.loganalyzer.LogAnalyzer(name, offset);
 });
 </script>
 <div id="control">
 	<div id="calendar"></div>
 	<div id="mainChart"></div>
-	<!--
-	<button class="btn btn-primary">Test</button>
-	-->
 </div>
 <div style="clear:both;height:10px;"></div>
 <div id="workspace">
@@ -81,6 +79,7 @@ $(document).ready(function() {
 	<div>
 		<table id="timeGrid"></table>
 	</div>
+	<button id="test" class="btn btn-primary">Test</button>
 </div>
 <div id="message"><div>@Messages("analyzing")<div></div>
 }

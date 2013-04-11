@@ -32,7 +32,7 @@ object CacheManager {
 			case Counter.Type.Time => timeCsv;
 		}
 		
-		def fullcsv = countCsv + timeCsv;
+		def fullcsv = countCsv + "\n" + timeCsv;
 	}
 	
 	def apply(name: String) = new CacheManager(name);
