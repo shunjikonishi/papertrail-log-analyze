@@ -67,14 +67,11 @@ object Application extends Controller {
 	private val ARCHIVES = sys.env.filterKeys(_.startsWith("PAPERTRAIL_ARCHIVE_"))
 		.map{ case(key, value) =>
 			val newKey = key.substring("PAPERTRAIL_ARCHIVE_".length).toLowerCase;
-			val (path, desc) = value.span(_ != '|');
-			val (bucket, dir) = path.span(_ != '/');
+			val (bucket, dir) = value.span(_ != '/');
 			
 			val newValue = ArchiveInfo(newKey, bucket,
-				if (dir.isEmpty) "papertrail/logs" else dir.substring(1),
-				desc.slice(1, desc.length)
+				if (dir.isEmpty) "papertrail/logs" else dir.substring(1)
 			);
-println(value + ", " + desc + ", " + newValue.description);
 			(newKey, newValue);
 		};
 	
@@ -140,7 +137,7 @@ println(value + ", " + desc + ", " + newValue.description);
 	)(DateKey.apply)(DateKey.unapply));
 	
 	def index = filterAction { request =>
-		Ok(views.html.index(ARCHIVES));
+		Ok(views.html.index(ARCHIVES.keySet));
 	}
 	
 	def calendar(name: String) = filterAction { request =>
@@ -285,6 +282,6 @@ println(value + ", " + desc + ", " + newValue.description);
 		CacheManager(info.name).put(key, summary);
 	}
 	
-	case class ArchiveInfo(name: String, bucket: String, directory: String, description: String);
+	case class ArchiveInfo(name: String, bucket: String, directory: String);
 	
 }

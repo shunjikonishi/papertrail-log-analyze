@@ -1,4 +1,4 @@
-@(names: scala.collection.Map[String, Application.ArchiveInfo])
+@(names: scala.collection.Set[String])
 
 @main("Papertrail Log Analyzer") {
 <style type="text/css">
@@ -26,11 +26,11 @@ footer .copy-right {
 	
 	<!-- Example row of columns -->
 	<div class="row">
-		@names.map{ case(key, info) =>
-			<div class="span6">
-				<h2><a href="/@key/calendar">@key</a></h2>
-				<p>@info.description</p>
-		</div>}
+		<div class="span6">
+			@names.map{ name =>
+				<h2><a href="/@name/calendar">@name</a></h2>
+			}
+		</div>
 	</div>
 </div> <!-- /container -->
 <div class="navbar navbar-fixed-bottom">
