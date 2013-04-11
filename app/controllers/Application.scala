@@ -48,7 +48,6 @@ import models.CacheManager.DateKey;
 
 object Application extends Controller {
 	
-	
 	//初期設定
 	sys.env.get("LOCALE").foreach { str =>
 		Locale.setDefault(str.split("_").toList match {
@@ -62,6 +61,22 @@ object Application extends Controller {
 	sys.env.get("TIMEZONE").foreach { str =>
 		TimeZone.setDefault(TimeZone.getTimeZone(str));
 	};
+	
+	private val ACCESS_KEY = sys.env("S3_ACCESSKEY");
+	private val SECRET_KEY = sys.env("S3_SECRETKEY");
+	private val ARCHIVES = sys.env.filterKeys(_.startsWith("PAPERTRAIL_ARCHIVE_"))
+		.map{ case(key, value) =>
+			val newKey = key.substring("PAPERTRAIL_ARCHIVE_".length).toLowerCase;
+			val (path, desc) = value.span(_ != '|');
+			val (bucket, dir) = path.span(_ != '/');
+			
+			val newValue = ArchiveInfo(newKey, bucket,
+				if (dir.isEmpty) "papertrail/logs" else dir.substring(1),
+				desc.slice(1, desc.length)
+			);
+println(value + ", " + desc + ", " + newValue.description);
+			(newKey, newValue);
+		};
 	
 	private val IP_FILTER = sys.env.get("ALLOWED_IP")
 		.map(IPFilter.getInstance(_));
@@ -115,26 +130,8 @@ object Application extends Controller {
 	}
 	
 	private def bucketCheck(name: String)(f: ArchiveInfo => Result) = {
-		Buckets.get(name) match {
-			case Some(info) => f(info);
-			case None => NotFound;
-		}
+		ARCHIVES.get(name).map(f(_)).getOrElse(NotFound);
 	}
-	
-	private val AccessKey = System.getenv("S3_ACCESSKEY");
-	private val SecretKey = System.getenv("S3_SECRETKEY");
-	private val Buckets = System.getenv()
-		.filterKeys(_.startsWith("PAPERTRAIL_ARCHIVE_"))
-		.map{ case(key, value) =>
-			val valueSep = value.indexOf('/');
-			val newKey = key.substring("PAPERTRAIL_ARCHIVE_".length).toLowerCase;
-			val newValue = if (valueSep == -1) {
-				ArchiveInfo(newKey, value, "papertrail/logs");
-			} else {
-				ArchiveInfo(newKey, value.substring(0, valueSep), value.substring(valueSep+1));
-			}
-			(newKey, newValue);
-		};
 	
 	private val dateForm = Form(mapping(
 		"year" -> number,
@@ -143,7 +140,7 @@ object Application extends Controller {
 	)(DateKey.apply)(DateKey.unapply));
 	
 	def index = filterAction { request =>
-		Ok(views.html.index(Buckets.keySet));
+		Ok(views.html.index(ARCHIVES));
 	}
 	
 	def calendar(name: String) = filterAction { request =>
@@ -212,7 +209,7 @@ object Application extends Controller {
 	}
 	
 	private def checkS3(info: ArchiveInfo, key: DateKey) = {
-		val client = new AmazonS3Client(new BasicAWSCredentials(AccessKey, SecretKey));
+		val client = new AmazonS3Client(new BasicAWSCredentials(ACCESS_KEY, SECRET_KEY));
 		val list = client.listObjects(info.bucket, info.directory + key.toDirectory);
 		if (list.getObjectSummaries() == null || list.getObjectSummaries().size() == 0) {
 			Ok(CacheStatus.NotFound.toString);
@@ -271,7 +268,7 @@ object Application extends Controller {
 				"/ebook/detail/[^/]+",
 			//"-rn",
 			"-ct",
-			"-s3", AccessKey, SecretKey, info.bucket, info.directory, key.toDateStr
+			"-s3", ACCESS_KEY, SECRET_KEY, info.bucket, info.directory, key.toDateStr
 		);
 		val analyzer = LogAnalyzer.process(args);
 		val countCsv = analyzer.toString(Counter.Type.Count);
@@ -288,6 +285,6 @@ object Application extends Controller {
 		CacheManager(info.name).put(key, summary);
 	}
 	
-	case class ArchiveInfo(name: String, bucket: String, directory: String);
+	case class ArchiveInfo(name: String, bucket: String, directory: String, description: String);
 	
 }
