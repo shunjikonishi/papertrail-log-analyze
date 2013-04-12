@@ -16,13 +16,10 @@ object CacheManager {
 	
 	sealed abstract class CacheStatus;
 	
-	case class DateKey(year: Int, month: Int, date: Int) {
-		def toDateStr = {
-			"%d-%02d-%02d".format(year, month, date);
-		}
-		def toDirectory = {
-			"/dt=%d-%02d-%02d".format(year, month, date);
-		}
+	case class DateKey(date: String) {
+		
+		def toDateStr = date;
+		def toDirectory = "/dt=" + date;
 	};
 	
 	case class Summary(val status: CacheStatus, countCsv: String = null, timeCsv: String = null) {

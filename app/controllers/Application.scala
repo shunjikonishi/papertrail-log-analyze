@@ -11,7 +11,7 @@ import play.api.mvc.Result;
 import play.api.data.Form;
 //import play.api.data.Forms._;
 import play.api.data.Forms.mapping;
-import play.api.data.Forms.number;
+import play.api.data.Forms.text;
 
 import play.api.Play.current;
 import play.api.libs.concurrent.Akka;
@@ -131,9 +131,7 @@ object Application extends Controller {
 	}
 	
 	private val dateForm = Form(mapping(
-		"year" -> number,
-		"month" -> number,
-		"date" -> number
+		"date" -> text
 	)(DateKey.apply)(DateKey.unapply));
 	
 	def index = filterAction { request =>
@@ -167,9 +165,9 @@ object Application extends Controller {
 		}
 	}
 	
-	def show(name: String, year: Int, month: Int, date: Int) = filterAction { implicit request =>
+	def show(name: String, date: String) = filterAction { implicit request =>
 		bucketCheck(name) { info =>
-			val key = DateKey(year, month, date);
+			val key = DateKey(date);
 			val summary = CacheManager(info.name).get(key);
 			summary.status match {
 				case CacheStatus.Ready =>

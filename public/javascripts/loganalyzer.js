@@ -24,24 +24,128 @@ flect.app.loganalyzer.CacheStatus = function() {
 	});
 }
 
-flect.app.loganalyzer.LogAnalyzer = function(name, timeOffset) {
-	var cntGrid, timeGrid, calendar,
-		CacheStatus = new flect.app.loganalyzer.CacheStatus(),
-		cntGridLoaded = false, timeGridLoaded = false,
-		cntChartData, timeChartData;
-	init();
-	
-	function init() {
-		//Calendar
-		calendar = $('#calendar').fullCalendar({
+flect.app.loganalyzer.Chart = function(app, elementId) {
+	function lineName(kind) {
+		return kind == "count" ? "Sec-Max" : "Average";
+	}
+	function draw(kind, data) {
+		if (!data || !data.name) {
+			return;
+		}
+		var bar1 = {
+			"data" : [],
+			"bars" : {
+				"show" : true,
+				"horizontal" : false,
+				"shadowSize" : 0,
+				"barWidth" : 0.8
+			}
+		}, line1 = {
+			"data" : [],
+			"label" : lineName(kind),
+			"yaxis" : 2,
+			"lines" : {
+				"show" : true
+			}
+		},ticks = [];
+		for (var i=1;i<=24; i++) {
+			var v1 = parseInt(data["cnt" + i], 10);
+			var v2 = parseInt(data["ms" + i], 10);
+			bar1.data.push([i - 1, v1]);
+			line1.data.push([i - 1, v2]);
+			ticks.push([i - 1, app.convertTime(i)]);
+		}
+		Flotr.draw(document.getElementById(elementId), [bar1, line1], {
+			"mouse" : {
+				"track" : true,
+				"trackFormatter" : function(obj) {
+					return Math.ceil(obj.y);
+				},
+				"relative" : true
+			},
+			"xaxis" : {
+				"ticks" : ticks,
+				"labelsAngle" : 45
+			},
+			"yaxis" : {
+				"min" : 0,
+				"title" : "Count",
+				"titleAngle" : 90,
+				"tickFormatter" : tickFormatter,
+				"autoscaleMargin" : 1,
+			},
+			"y2axis" : {
+				"color" : "#FF0000",
+				"min" : 0,
+				"title" : "Time(ms)",
+				"titleAngle" : -90,
+				"tickFormatter" : tickFormatter,
+				"autoscaleMargin" : 1
+			},
+			"HtmlText" : false
+		});
+		function tickFormatter(val, op) {
+			return Math.ceil(val) + "";
+		}
+	}
+	$.extend(this, {
+		"draw" : draw
+	});
+}
+
+flect.app.loganalyzer.Calendar = function(app, div) {
+	var current = null,
+		calendar = div.fullCalendar({
 			// put your options and callbacks here
 			"theme" : true,
 			"weekMode" : "liquid",
 			"aspectRatio" : 3,
 			"dayClick" : function(date) {
-				status(date, this);
+				app.status(date);
 			}
 		});
+	function formatDate(date) {
+		var year = date.getFullYear();
+		var month = date.getMonth() + 1;
+		var day = date.getDate();
+		if (month < 10) {
+			month = "0" + month;
+		}
+		if (day < 10) {
+			day = "0" + day;
+		}
+		return year + "-" + month + "-" + day;
+	}
+	function highlight(d) {
+		calendar.find(".fc-state-highlight").removeClass("fc-state-highlight");
+		calendar.find("td[data-date=" + formatDate(d) + "]").addClass("fc-state-highlight")
+	}
+	function currentDate(d) {
+		if (d) {
+			current = d;
+			highlight(d);
+			return this;
+		} else {
+			return current;
+		}
+	}
+	$.extend(this, {
+		"formatDate" : formatDate,
+		"currentDate" : currentDate
+	});
+}
+
+flect.app.loganalyzer.LogAnalyzer = function(name, timeOffset) {
+	var self = this,
+		cntGrid, timeGrid, calendar, chart,
+		CacheStatus = new flect.app.loganalyzer.CacheStatus();
+	init();
+	
+	function init() {
+		//Calendar
+		calendar = new flect.app.loganalyzer.Calendar(self, $('#calendar'));
+		//Chart
+		chart = new flect.app.loganalyzer.Chart(self, "mainChart");
 		
 		//Grid
 		var cntLabels = ["Name"],
@@ -99,20 +203,13 @@ flect.app.loganalyzer.LogAnalyzer = function(name, timeOffset) {
 			"rowNum" : 1000,
 			"rownumbers" : false,
 			"gridview" : true,
-			"caption" : "The number of logs",
+			"caption" : "ログ件数と1分または1秒あたりの最大出力件数",
 			"shrinkToFit" : false,
 			"height" : 200,
-			"loadComplete" : function(data) {
-				cntGridLoaded = true;
-				afterLoad();
-			},
 			"onSelectRow" : function(rowid, status, e) {
 				if (rowid && status) {
 					var data = cntGrid.getRowData(rowid);
-					if (data && data.cnt1) {
-						cntChartData = data;
-						drawChart();
-					}
+					chart.draw("count", data);
 				}
 			}
 		});
@@ -126,21 +223,16 @@ flect.app.loganalyzer.LogAnalyzer = function(name, timeOffset) {
 			"rowNum" : 1000,
 			"rownumbers" : false,
 			"gridview" : true,
-			"caption" : "ResponseTime",
+			"caption" : "ログ内の数値の件数、最大値、平均値",
 			"shrinkToFit" : false,
 			"height" : 200,
 			"loadComplete" : function(data) {
-				timeGridLoaded = true;
-				afterLoad();
+				drawInitialChart();
 			},
 			"onSelectRow" : function(rowid, status, e) {
 				if (rowid && status) {
 					var data = timeGrid.getRowData(rowid);
-					if (data && data.cnt1) {
-						cntChartData = data;
-						timeChartData = data;
-						drawChart();
-					}
+					chart.draw("time", data);
 				}
 			}
 		});
@@ -163,9 +255,15 @@ flect.app.loganalyzer.LogAnalyzer = function(name, timeOffset) {
 			"groupHeaders" : groupHeaders
 		}).jqGrid('setFrozenColumns');
 		
-		$("#test").click(function() {
-			window.open("/" + name + "/show/2013/4/9");
-		});
+		$("#test").click(download);
+	}
+	function download() {
+		var d = calendar.currentDate();
+		if (d) {
+			window.open("/" + name + "/show/" + calendar.formatDate(d));
+		} else {
+			alert("ログが表示されていません");
+		}
 	}
 	function convertTime(n) {
 		var time = n + timeOffset - 1;
@@ -176,20 +274,11 @@ flect.app.loganalyzer.LogAnalyzer = function(name, timeOffset) {
 		}
 		return time + ":00";
 	}
-	function highlight(td) {
-		calendar.find(".fc-state-highlight").removeClass("fc-state-highlight");
-		$(td).addClass("fc-state-highlight")
-	}
-	function status(date, td) {
-		var year = date.getFullYear();
-		var month = date.getMonth() + 1;
-		var day = date.getDate();
+	function status(date) {
 		$.ajax({
 			"url" : "/" + name + "/status",
 			"data" : {
-				"year" : year,
-				"month" : month,
-				"date" : day
+				"date" : calendar.formatDate(date)
 			},
 			"type" : "POST",
 			"success" : function(data) {
@@ -197,7 +286,7 @@ flect.app.loganalyzer.LogAnalyzer = function(name, timeOffset) {
 				switch (cs) {
 					case CacheStatus.Ready:
 						$("#message").hide();
-						loadData(year, month, day, td);
+						loadData(date);
 						break;
 					case CacheStatus.NotFound:
 						alert("ログがありません。");
@@ -205,7 +294,7 @@ flect.app.loganalyzer.LogAnalyzer = function(name, timeOffset) {
 					case CacheStatus.Found:
 						$("#message").show();
 						setTimeout(function() {
-							status(date, td)
+							status(date)
 						}, 1000);
 						break;
 					case CacheStatus.Error:
@@ -219,98 +308,28 @@ flect.app.loganalyzer.LogAnalyzer = function(name, timeOffset) {
 			}
 		});
 	}
-	function loadData(year, month, day, td) {
-		cntGridLoaded = false;
-		timeGridLoaded = false;
-		cntChartData = null;
-		timeChartData = null;
-		
+	function loadData(date) {
+		var str = calendar.formatDate(date);
 		cntGrid.jqGrid("setGridParam", {
 			"postData" : {
-				"year" : year,
-				"month" : month,
-				"date" : day
+				"date" : str
 			}
 		}).trigger("reloadGrid");
 		timeGrid.jqGrid("setGridParam", {
 			"postData" : {
-				"year" : year,
-				"month" : month,
-				"date" : day
+				"date" : str
 			}
 		}).trigger("reloadGrid");
-		highlight(td);
-	}
-	function afterLoad() {
-		if (cntGridLoaded && timeGridLoaded) {
-			cntGridLoaded = false;
-			timeGridLoaded = false;
-			setTimeout(drawInitialChart, 0);
-		}
+		calendar.currentDate(date);
 	}
 	function drawInitialChart() {
-		cntChartData = cntGrid.jqGrid("getRowData", "log-2"),
-		timeChartData = timeGrid.jqGrid("getRowData", "log-2");
-		drawChart();
+		setTimeout(function() {
+			var data = timeGrid.jqGrid("getRowData", "log-2");
+			chart.draw("time", data);
+		}, 0);
 	}
-	function drawChart() {
-		if (!cntChartData || !cntChartData.name || !timeChartData || !timeChartData.name) {
-			return;
-		}
-		var bar1 = {
-			"data" : [],
-			"bars" : {
-				"show" : true,
-				"horizontal" : false,
-				"shadowSize" : 0,
-				"barWidth" : 0.8
-			}
-		}, line1 = {
-			"data" : [],
-			"label" : "Average",
-			"yaxis" : 2,
-			"lines" : {
-				"show" : true
-			}
-		},ticks = [];
-		for (var i=1;i<=24; i++) {
-			var v1 = parseInt(cntChartData["cnt" + i], 10);
-			var v2 = parseInt(timeChartData["ms" + i], 10);
-			bar1.data.push([i - 1, v1]);
-			line1.data.push([i - 1, v2]);
-			ticks.push([i - 1, convertTime(i)]);
-		}
-		Flotr.draw(document.getElementById("mainChart"), [bar1, line1], {
-			"mouse" : {
-				"track" : true,
-				"trackFormatter" : function(obj) {
-					return Math.ceil(obj.y);
-				},
-				"relative" : true
-			},
-			"xaxis" : {
-				"ticks" : ticks,
-				"labelsAngle" : 45
-			},
-			"yaxis" : {
-				"min" : 0,
-				"title" : "Count",
-				"titleAngle" : 90,
-				"tickFormatter" : tickFormatter,
-				"autoscaleMargin" : 1,
-			},
-			"y2axis" : {
-				"color" : "#FF0000",
-				"min" : 0,
-				"title" : "Time(ms)",
-				"titleAngle" : -90,
-				"tickFormatter" : tickFormatter,
-				"autoscaleMargin" : 1
-			},
-			"HtmlText" : false
-		});
-		function tickFormatter(val, op) {
-			return Math.ceil(val) + "";
-		}
-	}
+	$.extend(this, {
+		"convertTime" : convertTime,
+		"status" : status
+	});
 }
