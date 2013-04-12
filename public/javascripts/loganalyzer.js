@@ -25,13 +25,34 @@ flect.app.loganalyzer.CacheStatus = function() {
 }
 
 flect.app.loganalyzer.Chart = function(app, elementId) {
-	function lineName(kind) {
-		return kind == "count" ? "Sec-Max" : "Average";
+	var currentData = null, currentKind = null, lineCol = "ms";
+	
+	function lineName() {
+		if (currentKind == "count") {
+			return lineCol == "mm" ? MSG.countMin : MSG.countSec;
+		} else {
+			return lineCol == "mm" ? MSG.timeMax : MSG.timeAvg;
+		}
+	}
+	function lineColor() {
+		var n = 0;
+		if (currentKind == "count") {
+			n = lineCol == "mm" ? 0 : 1;
+		} else {
+			n = lineCol == "mm" ? 2 : 3;
+		}
+		return Flotr.defaultOptions.colors[n];
+	}
+	function axis2Name() {
+		return currentKind == "count" ? "Count" : "Time(ms)";
 	}
 	function draw(kind, data) {
-		if (!data || !data.name) {
+		if (!data || !data.cnt1) {
 			return;
 		}
+		currentData = data;
+		currentKind = kind;
+		
 		var bar1 = {
 			"data" : [],
 			"bars" : {
@@ -42,15 +63,16 @@ flect.app.loganalyzer.Chart = function(app, elementId) {
 			}
 		}, line1 = {
 			"data" : [],
-			"label" : lineName(kind),
+			"label" : lineName(),
 			"yaxis" : 2,
+			"color" : lineColor(),
 			"lines" : {
 				"show" : true
 			}
 		},ticks = [];
 		for (var i=1;i<=24; i++) {
 			var v1 = parseInt(data["cnt" + i], 10);
-			var v2 = parseInt(data["ms" + i], 10);
+			var v2 = parseInt(data[lineCol + i], 10);
 			bar1.data.push([i - 1, v1]);
 			line1.data.push([i - 1, v2]);
 			ticks.push([i - 1, app.convertTime(i)]);
@@ -77,7 +99,7 @@ flect.app.loganalyzer.Chart = function(app, elementId) {
 			"y2axis" : {
 				"color" : "#FF0000",
 				"min" : 0,
-				"title" : "Time(ms)",
+				"title" : axis2Name(),
 				"titleAngle" : -90,
 				"tickFormatter" : tickFormatter,
 				"autoscaleMargin" : 1
@@ -88,8 +110,16 @@ flect.app.loganalyzer.Chart = function(app, elementId) {
 			return Math.ceil(val) + "";
 		}
 	}
+	function changeLine() {
+		if (!currentData) {
+			return;
+		}
+		lineCol = lineCol == "ms" ? "mm" : "ms";
+		draw(currentKind, currentData);
+	}
 	$.extend(this, {
-		"draw" : draw
+		"draw" : draw,
+		"changeLine" : changeLine
 	});
 }
 
@@ -148,8 +178,8 @@ flect.app.loganalyzer.LogAnalyzer = function(name, timeOffset) {
 		chart = new flect.app.loganalyzer.Chart(self, "mainChart");
 		
 		//Grid
-		var cntLabels = ["Name"],
-			timeLabels = ["Name"],
+		var cntLabels = [MSG.name],
+			timeLabels = [MSG.name],
 			colModel = [{ "name" : "name", "width" : 200}];
 		
 		for (var i=0; i<25; i++) {
@@ -182,13 +212,13 @@ flect.app.loganalyzer.LogAnalyzer = function(name, timeOffset) {
 				"align" : "right"
 			});
 			
-			cntLabels.push("All");
-			cntLabels.push("Min");
-			cntLabels.push("Sec");
+			cntLabels.push(MSG.countAll);
+			cntLabels.push(MSG.countMin);
+			cntLabels.push(MSG.countSec);
 			
-			timeLabels.push("Cnt");
-			timeLabels.push("Max");
-			timeLabels.push("Avg");
+			timeLabels.push(MSG.timeAll);
+			timeLabels.push(MSG.timeMax);
+			timeLabels.push(MSG.timeAvg);
 		}
 		for (var i=0; i<4; i++) {
 			colModel[i].frozen = true;
@@ -203,7 +233,7 @@ flect.app.loganalyzer.LogAnalyzer = function(name, timeOffset) {
 			"rowNum" : 1000,
 			"rownumbers" : false,
 			"gridview" : true,
-			"caption" : "ログ件数と1分または1秒あたりの最大出力件数",
+			"caption" : MSG.countGrid,
 			"shrinkToFit" : false,
 			"height" : 200,
 			"onSelectRow" : function(rowid, status, e) {
@@ -212,7 +242,7 @@ flect.app.loganalyzer.LogAnalyzer = function(name, timeOffset) {
 					chart.draw("count", data);
 				}
 			}
-		});
+		}).jqGrid('gridResize', { "minWidth" : 400, "minHeight" : 100});
 		timeGrid = $("#timeGrid").jqGrid({
 			"autowidth" : true,
 			"url" : "/" + name + "/responsetime",
@@ -223,7 +253,7 @@ flect.app.loganalyzer.LogAnalyzer = function(name, timeOffset) {
 			"rowNum" : 1000,
 			"rownumbers" : false,
 			"gridview" : true,
-			"caption" : "ログ内の数値の件数、最大値、平均値",
+			"caption" : MSG.timeGrid,
 			"shrinkToFit" : false,
 			"height" : 200,
 			"loadComplete" : function(data) {
@@ -235,11 +265,11 @@ flect.app.loganalyzer.LogAnalyzer = function(name, timeOffset) {
 					chart.draw("time", data);
 				}
 			}
-		});
+		}).jqGrid('gridResize', { "minWidth" : 400, "minHeight" : 100});
 		var groupHeaders = [];
 		for (var i=0; i<25; i++) {
 			var suffix = i == 0 ? "All" : i;
-			var title = i == 0 ? "Total" : convertTime(i);
+			var title = i == 0 ? MSG.total : convertTime(i);
 			groupHeaders.push({
 				"startColumnName" : "cnt" + suffix,
 				"numberOfColumns" : 3,
@@ -255,14 +285,20 @@ flect.app.loganalyzer.LogAnalyzer = function(name, timeOffset) {
 			"groupHeaders" : groupHeaders
 		}).jqGrid('setFrozenColumns');
 		
-		$("#test").click(download);
+		$("#download").click(download);
+		$("#setting").click(function() {
+			alert("Not implemented yet");
+		});
+		$("#chartBtn").button().click(function() {
+			chart.changeLine();
+		});
 	}
 	function download() {
 		var d = calendar.currentDate();
 		if (d) {
 			window.open("/" + name + "/show/" + calendar.formatDate(d));
 		} else {
-			alert("ログが表示されていません");
+			alert(MSG.notDisplayedLog);
 		}
 	}
 	function convertTime(n) {
@@ -289,7 +325,7 @@ flect.app.loganalyzer.LogAnalyzer = function(name, timeOffset) {
 						loadData(date);
 						break;
 					case CacheStatus.NotFound:
-						alert("ログがありません。");
+						alert(MSG.notFoundLog);
 						break;
 					case CacheStatus.Found:
 						$("#message").show();
@@ -299,7 +335,7 @@ flect.app.loganalyzer.LogAnalyzer = function(name, timeOffset) {
 						break;
 					case CacheStatus.Error:
 						$("#message").hide();
-						alert("S3 access error");
+						alert(MSG.s3error);
 						break;
 					default:
 						alert("Unknown status: " + data);
@@ -325,7 +361,10 @@ flect.app.loganalyzer.LogAnalyzer = function(name, timeOffset) {
 	function drawInitialChart() {
 		setTimeout(function() {
 			var data = timeGrid.jqGrid("getRowData", "log-2");
-			chart.draw("time", data);
+			if (data && data.name) {
+				chart.draw("time", data);
+				$("#chartBtn").show();
+			}
 		}, 0);
 	}
 	$.extend(this, {

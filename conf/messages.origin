@@ -1,27 +1,65 @@
 viewSource=View source
 viewSource[ja]=ソースを見る
 
+home=Home
+home[ja]=ホーム
+
+language=Language
+language[ja]=言語
+
+english=English
+english[ja]=英語
+
+japanese=Japanese
+japanese[ja]=日本語
+
+setting=Setting
+setting[ja]=設定
+
 analyzing=Analyzing...
 analyzing[ja]=解析中・・・
 
 loading=Loading...
 loading[ja]=ロード中・・・
 
-countAll=All
-countAll[ja]=件数
+download=Download
+download[ja]=ダウンロード
 
-countMin=Min
-countMin[ja]=分間
+ui.name=Name
+ui.name[ja]=名前
 
-countSec=Sec
-countSec[ja]=秒間
+ui.countAll=All
+ui.countAll[ja]=件数
 
-timeAll=Cnt
-timeAll[ja]=件数
+ui.countMin=Min
+ui.countMin[ja]=分間
 
-timeAvg=Avg
-timeAvg[ja]=平均
+ui.countSec=Sec
+ui.countSec[ja]=秒間
 
-timeMax=Max
-timeMax[ja]=最大
+ui.timeAll=Cnt
+ui.timeAll[ja]=件数
 
+ui.timeAvg=Avg
+ui.timeAvg[ja]=平均
+
+ui.timeMax=Max
+ui.timeMax[ja]=最大
+
+ui.total=Total
+ui.total[ja]=総計
+
+ui.countGrid=The number of logs
+ui.countGrid[ja]=ログ件数
+
+ui.timeGrid=The max and average of the number in logs
+ui.timeGrid[ja]=ログ内の数値の最大値と平均値
+
+ui.notDisplayedLog=Log is not displayed
+ui.notDisplayedLog[ja]=ログが表示されていません
+
+ui.notFoundLog=Not found log
+ui.notFoundLog[ja]=ログが見つかりません
+
+ui.s3error=S3 access error
+ui.s3error[ja]=S3へのアクセスでエラーが発生しました

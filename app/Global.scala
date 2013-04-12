@@ -11,11 +11,12 @@ object Global extends GlobalSettings {
 	
 	override def onStart(app: Application) {
 		//Generate messages and messages.ja
-		var msg = new File("conf/messages");
+		val defaults = new File("conf/messages");
 		val origin = new File("conf/messages.origin");
-		if (origin.lastModified > msg.lastModified) {
-			val gen = new ResourceGen(msg.getParentFile(), "messages");
-			gen.process(msg);
+		if (origin.lastModified > defaults.lastModified) {
+			val gen = new ResourceGen(defaults.getParentFile(), "messages");
+			gen.process(origin);
 		}
 	}
+	
 }

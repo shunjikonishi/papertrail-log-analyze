@@ -139,6 +139,16 @@ object Application extends Controller {
 		Ok(views.html.index(ARCHIVES.keySet));
 	}
 	
+	def msg(lang: String) = filterAction { request =>
+		import play.api.i18n.MessagesPlugin;
+		
+		val map = play.api.Play.current.plugin[MessagesPlugin]
+			.map(_.api.messages).getOrElse(Map.empty);
+		println(map);
+		Ok(views.html.messages(map.getOrElse(lang, map("defaults")).filterKeys(_.startsWith("ui."))))
+			.as("text/javascript");
+	}
+	
 	def calendar(name: String) = filterAction { request =>
 		bucketCheck(name) { info =>
 			val offset = TimeZone.getDefault().getRawOffset() / (60 * 60 * 1000);

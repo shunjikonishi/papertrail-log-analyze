@@ -1,4 +1,4 @@
-@(name: String, offset: Int)
+@(name: String, offset: Int)(implicit lang:Lang)
 
 @main("Papertrail Log Analyzer") {
 <link rel='stylesheet' type='text/css' href='@routes.Assets.at("javascripts/ext/fullcalendar/fullcalendar.css")' />
@@ -9,22 +9,25 @@
 	width: 100%;
 	height:200px;
 }
-#control button {
-	margin: 5px;
-}
 #calendar {
 	position: absolute;
 	left: 10px;
-	top: 10px;
+	top: 50px;
 	width:350px;
 	height: 100%;
 }
 #mainChart {
 	position: absolute;
 	left: 370px;
-	top: 10px;
+	top: 20px;
 	width: 800px;
 	height: 200px;
+}
+#chartBtn {
+	position: absolute;
+	left: 1170px;
+	top: 70px;
+	display:none;
 }
 #message {
 	position: absolute;
@@ -50,6 +53,7 @@
 	width: 95%;
 }
 </style>
+<script type='text/javascript' src='/i18n/@lang.language/messages.js'></script>
 <script type='text/javascript' src='@routes.Assets.at("javascripts/ext/fullcalendar/fullcalendar.js")'></script>
 <script type='text/javascript' src='@routes.Assets.at("javascripts/ext/jqgrid/js/i18n/grid.locale-en.js")'></script>
 <script type='text/javascript' src='@routes.Assets.at("javascripts/ext/jqgrid/js/jquery.jqGrid.src.js")'></script>
@@ -65,9 +69,33 @@ $(document).ready(function() {
 	app = new flect.app.loganalyzer.LogAnalyzer(name, offset);
 });
 </script>
+<div id="header" class="navbar navbar-inverse">
+	<div class="navbar-inner">
+		<div class="container-fluid">
+			<a class="brand" href="/">LogAnalyzer</a>
+			<div class="nav-collapse collapse">
+				<ul class="nav">
+					<li><a href="/">@Messages("home")</a></li>
+					<li class="dropdown">
+						<a href="#" class="dropdown-toggle" data-toggle="dropdown">@Messages("language")<b class="caret"></b></a>
+						<ul class="dropdown-menu">
+							<li><a href="/setting/lang?lang=en">@Messages("english")</a></li>
+							<li><a href="/setting/lang?lang=ja">@Messages("japanese")</a></li>
+						</ul>
+					</li>
+				</ul>
+			</div><!--/.nav-collapse -->
+			<div class="pull-right">
+				<button id="download" class="btn btn-info">@Messages("download")</button>
+				<button id="setting" class="btn btn-info">@Messages("setting")</button>
+			</div>
+		</div>
+	</div>
+</div>
 <div id="control">
 	<div id="calendar"></div>
 	<div id="mainChart"></div>
+	<button id="chartBtn"><span class="ui-icon ui-icon-transferthick-e-w"></span></button>
 </div>
 <div style="clear:both;height:10px;"></div>
 <div id="workspace">
@@ -78,7 +106,6 @@ $(document).ready(function() {
 	<div>
 		<table id="timeGrid"></table>
 	</div>
-	<button id="test" class="btn btn-primary" style="margin:10px">Download</button>
 </div>
 <div id="message"><div>@Messages("analyzing")</div></div>
 }
