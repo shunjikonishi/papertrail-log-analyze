@@ -112,6 +112,7 @@ object Application extends Controller {
 					true;
 			}
 		}
+		
 		val t = System.currentTimeMillis();
 		try {
 			if (!ipFilter) {
