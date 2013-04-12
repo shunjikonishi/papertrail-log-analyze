@@ -1,13 +1,9 @@
-viewSource=View source
 analyzing=Analyzing...
+countAll=All
+countMin=Min
+countSec=Sec
 loading=Loading...
-
-CountAll=All
-CountMin=Min
-CountSec=Sec
-
-TimeAll=Cnt
-TimeAvg=Avg
-TimeMax=Max
-
-Test=Test
+timeAll=Cnt
+timeAvg=Avg
+timeMax=Max
+viewSource=View source

@@ -229,7 +229,7 @@ object Application extends Controller {
 			try {
 				prepareCSV(client, info, key);
 			} catch {
-				case e: Exception => 
+				case e: Throwable => 
 					e.printStackTrace();
 					CacheManager(info.name).put(key, Summary(CacheStatus.Error));
 			}
@@ -240,6 +240,7 @@ object Application extends Controller {
 	}
 	
 	private def prepareCSV(client: AmazonS3Client, info: ArchiveInfo, key: DateKey) = {
+		val t = System.currentTimeMillis;
 		val args = Array(
 			"-al",
 			"-ac",
@@ -262,14 +263,30 @@ object Application extends Controller {
 				"/mobile/select/author/\\d+",
 				"/mobile/select/genre/\\d+",
 				"/mobile/select/genre/\\d+/\\d+",
+				"/pc/product/\\d+",
+				"/pc/select/author/\\d+",
+				"/pc/select/genre/\\d+",
+				"/pc/select/genre/\\d+/\\d+",
 				"/ebook/detail/[^/]+",
+				"/accounts/\\d+",
+				"/accounts/\\d+/edit",
+				"/contents/\\d+",
+				"/account_contents/\\d+",
+				"/account_contents/\\d+/edit",
+				"/contents/\\d+/license_infos",
+				"/api4int/query_password/[^/]+",
+				"/api4int/activate/[^/]+",
+				"/contents_upload_logs/\\d+",
 			//"-rn",
 			"-ct",
+			"-ss",
 			"-s3", ACCESS_KEY, SECRET_KEY, info.bucket, info.directory, key.toDateStr
 		);
 		val analyzer = LogAnalyzer.process(args);
-		val countCsv = analyzer.toString(Counter.Type.Count);
-		val timeCsv = analyzer.toString(Counter.Type.Time);
+		Logger.info("Analize: " + info.name + "-" + key.toDateStr + "(" + (System.currentTimeMillis - t) + "ms)");
+		
+		val countCsv = analyzer.toString(Counter.Type.Count, "\t");
+		val timeCsv = analyzer.toString(Counter.Type.Time, "\t");
 		val summary = Summary(CacheStatus.Ready, countCsv, timeCsv);
 		/*
 		val data = summary.fullcsv.getBytes("utf-8");

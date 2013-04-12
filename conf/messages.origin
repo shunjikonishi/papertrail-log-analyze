@@ -7,21 +7,21 @@ analyzing[ja]=解析中・・・
 loading=Loading...
 loading[ja]=ロード中・・・
 
-CountAll=All
-CountAll[ja]=件数
+countAll=All
+countAll[ja]=件数
 
-CountMin=Min
-CountMin[ja]=分間
+countMin=Min
+countMin[ja]=分間
 
-CountSec=Sec
-CountSec[ja]=秒間
+countSec=Sec
+countSec[ja]=秒間
 
-TimeAll=Cnt
-TimeAll[ja]=件数
+timeAll=Cnt
+timeAll[ja]=件数
 
-TimeAvg=Avg
-TimeAvg[ja]=平均
+timeAvg=Avg
+timeAvg[ja]=平均
 
-TimeMax=Max
-TimeMax[ja]=最大
+timeMax=Max
+timeMax[ja]=最大
 

@@ -19,7 +19,7 @@ object JqGrid {
 		var idx = 0;
 		val rows = csv.split("\n");
 		val data = rows.map{ row =>
-			val cols = row.split(",");
+			val cols = row.split("\t");
 			idx += 1;
 			Map(
 				"id" -> toJson("log-" + idx),

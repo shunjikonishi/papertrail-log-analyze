@@ -5,15 +5,17 @@ import play.api.Logger;
 import scala.io.Source;
 import java.io.File;
 
+import jp.co.flect.util.ResourceGen;
+
 object Global extends GlobalSettings {
 	
 	override def onStart(app: Application) {
+		//Generate messages and messages.ja
+		var msg = new File("conf/messages");
 		val origin = new File("conf/messages.origin");
-		val en = new File("conf/messages");
-		val ja = new File("conf/messages.ja");
-		if (origin.lastModified > en.lastModified || origin.lastModified > ja.lastModified) {
-			val (enIt, jaIt) = Source.fromFile(origin).getLines.partition(_.indexOf("[ja]") == -1);
-			println(jaIt.mkString("\n"));
+		if (origin.lastModified > msg.lastModified) {
+			val gen = new ResourceGen(msg.getParentFile(), "messages");
+			gen.process(msg);
 		}
 	}
 }

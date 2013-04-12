@@ -1,13 +1,9 @@
-viewSource=View source
-analyzing=Analyzing...
-loading=Loading...
-
-CountAll=All
-CountMin=Min
-CountSec=Sec
-
-TimeAll=Cnt
-TimeAvg=Avg
-TimeMax=Max
-
-Test=Test
+analyzing=解析中・・・
+countAll=件数
+countMin=分間
+countSec=秒間
+loading=ロード中・・・
+timeAll=件数
+timeAvg=平均
+timeMax=最大
+viewSource=ソースを見る
