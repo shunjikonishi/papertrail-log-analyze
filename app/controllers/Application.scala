@@ -274,6 +274,7 @@ object Application extends Controller {
 			//"-rn",
 			"-ct",
 			"-ss",
+			"-dt",
 			"-s3", ACCESS_KEY, SECRET_KEY, info.bucket, info.directory, key.toDateStr
 		);
 		val analyzer = LogAnalyzer.process(args);
