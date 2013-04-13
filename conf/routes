@@ -4,13 +4,14 @@
 
 # Home page
 GET     /                                 controllers.Application.index
-GET     /:name/calendar                   controllers.Application.calendar(name)
+GET     /:name                            controllers.Application.loganalyzer(name)
 POST    /:name/status                     controllers.Application.status(name)
 POST    /:name/logcount                   controllers.Application.logcount(name)
 POST    /:name/responsetime               controllers.Application.responsetime(name)
 GET     /:name/show/:date                 controllers.Application.show(name, date)
 
-GET     /i18n/:lang/messages.js           controllers.Application.msg(lang)
+GET     /i18n/setlang                     controllers.I18N.setLang(lang)
+GET     /i18n/:lang/messages.js           controllers.I18N.messages(lang)
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)

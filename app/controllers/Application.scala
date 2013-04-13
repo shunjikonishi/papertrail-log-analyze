@@ -48,16 +48,7 @@ import models.CacheManager.DateKey;
 
 object Application extends Controller {
 	
-	//初期設定
-	sys.env.get("LOCALE").foreach { str =>
-		Locale.setDefault(str.split("_").toList match {
-			case lang :: country :: variant :: Nil => new Locale(lang, country, variant);
-			case lang :: country :: Nil => new Locale(lang, country);
-			case lang :: Nil => new Locale(lang);
-			case _ => Locale.getDefault;
-		});
-	};
-	
+	//Initialize
 	sys.env.get("TIMEZONE").foreach { str =>
 		TimeZone.setDefault(TimeZone.getTimeZone(str));
 	};
@@ -75,9 +66,11 @@ object Application extends Controller {
 			(newKey, newValue);
 		};
 	
+	//IP restriction setting, if required
 	private val IP_FILTER = sys.env.get("ALLOWED_IP")
 		.map(IPFilter.getInstance(_));
 	
+	//Basic authentication setting, if required
 	private val BASIC_AUTH = sys.env.get("BASIC_AUTHENTICATION")
 		.filter(_.split(":").length == 2)
 		.map { str =>
@@ -85,6 +78,8 @@ object Application extends Controller {
 			(strs(0), strs(1));
 		};
 	
+	//Apply IP restriction and Basic authentication
+	//and Logging
 	private def filterAction(f: Request[AnyContent] => Result): Action[AnyContent] = Action {request =>
 		def ipFilter = {
 			IP_FILTER match {
@@ -139,20 +134,10 @@ object Application extends Controller {
 		Ok(views.html.index(ARCHIVES.keySet));
 	}
 	
-	def msg(lang: String) = filterAction { request =>
-		import play.api.i18n.MessagesPlugin;
-		
-		val map = play.api.Play.current.plugin[MessagesPlugin]
-			.map(_.api.messages).getOrElse(Map.empty);
-		println(map);
-		Ok(views.html.messages(map.getOrElse(lang, map("defaults")).filterKeys(_.startsWith("ui."))))
-			.as("text/javascript");
-	}
-	
-	def calendar(name: String) = filterAction { request =>
+	def loganalyzer(name: String) = filterAction { implicit request =>
 		bucketCheck(name) { info =>
 			val offset = TimeZone.getDefault().getRawOffset() / (60 * 60 * 1000);
-			Ok(views.html.calendar(name, offset));
+			Ok(views.html.loganalyzer(name, offset));
 		}
 	}
 	
