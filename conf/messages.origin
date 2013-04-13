@@ -28,32 +28,32 @@ download[ja]=ダウンロード
 ui.name=Name
 ui.name[ja]=名前
 
-ui.countAll=All
-ui.countAll[ja]=件数
+ui.CountGrid=The number of logs
+ui.CountGrid[ja]=ログ件数
 
-ui.countMin=Min
-ui.countMin[ja]=分間
+ui.CountCNT=All
+ui.CountCNT[ja]=件数
 
-ui.countSec=Sec
-ui.countSec[ja]=秒間
+ui.CountMM=Min
+ui.CountMM[ja]=分間
 
-ui.timeAll=Cnt
-ui.timeAll[ja]=件数
+ui.CountMS=Sec
+ui.CountMS[ja]=秒間
 
-ui.timeAvg=Avg
-ui.timeAvg[ja]=平均
+ui.TimeGrid=The max and average of the number in logs
+ui.TimeGrid[ja]=ログ内の数値の最大値と平均値
 
-ui.timeMax=Max
-ui.timeMax[ja]=最大
+ui.TimeCNT=Cnt
+ui.TimeCNT[ja]=件数
+
+ui.TimeMM=Max
+ui.TimeMM[ja]=最大
+
+ui.TimeMS=Avg
+ui.TimeMS[ja]=平均
 
 ui.total=Total
 ui.total[ja]=総計
-
-ui.countGrid=The number of logs
-ui.countGrid[ja]=ログ件数
-
-ui.timeGrid=The max and average of the number in logs
-ui.timeGrid[ja]=ログ内の数値の最大値と平均値
 
 ui.notDisplayedLog=Log is not displayed
 ui.notDisplayedLog[ja]=ログが表示されていません

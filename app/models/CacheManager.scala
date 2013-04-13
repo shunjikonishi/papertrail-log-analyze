@@ -6,6 +6,8 @@ import jp.co.flect.papertrail.Counter;
 
 object CacheManager {
 	
+	private val CACHE_DURATION = 60 * 60;
+	
 	object CacheStatus {
 		case object Unprocessed extends CacheStatus;
 		case object Ready extends CacheStatus;
@@ -40,6 +42,6 @@ class CacheManager(name: String) {
 	import CacheManager._;
 	
 	def get(key: DateKey) = Cache.getOrElse[Summary](name + "-" + key.toDateStr) { Summary(CacheStatus.Unprocessed);}
-	def put(key: DateKey, data: Summary) = Cache.set(name + "-" + key.toDateStr, data);
+	def put(key: DateKey, data: Summary) = Cache.set(name + "-" + key.toDateStr, data, CACHE_DURATION);
 	def remove(key: DateKey) = Cache.remove(name + "-" + key.toDateStr);
 }
