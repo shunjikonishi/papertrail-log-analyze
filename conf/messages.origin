@@ -1,8 +1,14 @@
 viewSource=View source
 viewSource[ja]=ソースを見る
 
+view=View
+view[ja]=表示
+
 home=Home
 home[ja]=ホーム
+
+log=Log
+log[ja]=ログ
 
 language=Language
 language[ja]=言語
@@ -63,3 +69,60 @@ ui.notFoundLog[ja]=ログが見つかりません
 
 ui.s3error=S3 access error
 ui.s3error[ja]=S3へのアクセスでエラーが発生しました
+
+counter.allLog=All Log
+counter.allLog[ja]=すべてのログ
+
+counter.accessLog=Access Log
+counter.accessLog[ja]=アクセスログ
+
+counter.slowRequest=Slow Request(More than {0}ms)
+counter.slowRequest[ja]={0}ms以上かかったリクエスト
+
+counter.slowConnect=Slow Connect(More than {0}ms)
+counter.slowConnect[ja]=接続に{0}ms以上かかったリクエスト
+
+counter.slowSQL=Slow SQL(More than {0}ms)
+counter.slowSQL[ja]=遅延SQL({0}ms以上)
+
+counter.path=Path
+counter.path[ja]=パス
+
+counter.clientError=Client Error
+counter.clientError[ja]=クライアントエラー(40x)
+
+counter.serverError=Server Error
+counter.serverError[ja]=サーバーエラー(50x)
+
+counter.dynoStateChanged=Dyno state changed
+counter.dynoStateChanged[ja]=Dynoステート変更
+
+counter.program=By Program
+counter.program[ja]=プログラム別
+
+counter.herokuError=By Heroku Error
+counter.herokuError[ja]=Herokuエラー別
+
+counter.responseTime=Response Time
+counter.responseTime[ja]=レスポンスタイム
+
+counter.regexGroup=Regex Group
+counter.regexGroup[ja]=正規表現グループ
+
+counter.pattern=Pattern
+counter.pattern[ja]=パターン
+
+counter.regexNumber=Regex Number
+counter.regexNumber[ja]=正規表現数値
+
+counter.connectTime=Connect time
+counter.connectTime[ja]=接続時間
+
+counter.dynoBoot=Dyno boot time
+counter.dynoBoot[ja]=Dyno起動時間
+
+counter.allAccess=All Access
+counter.allAccess[ja]=すべてのアクセス
+
+counter.allSQL=All sql
+counter.allSQL[ja]=すべての遅延SQL

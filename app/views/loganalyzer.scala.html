@@ -1,4 +1,4 @@
-@(name: String, offset: Int)(implicit lang:Lang)
+@(name: String, offset: Int, names: scala.collection.Set[String])(implicit lang:Lang)
 
 @main("Papertrail Log Analyzer") {
 <link rel='stylesheet' type='text/css' href='@routes.Assets.at("javascripts/ext/fullcalendar/fullcalendar.css")' />
@@ -17,11 +17,11 @@
 	height: 100%;
 }
 #mainChart {
-	position: absolute;
+	position: relative;
 	left: 370px;
-	top: 20px;
+	top: -10px;
 	width: 800px;
-	height: 200px;
+	height: 240px;
 }
 #chartBtn {
 	position: absolute;
@@ -88,10 +88,19 @@ $(document).ready(function() {
 <div id="header" class="navbar navbar-inverse">
 	<div class="navbar-inner">
 		<div class="container-fluid">
-			<a class="brand" href="/">LogAnalyzer</a>
+			<span class="brand" href="/">@name</span>
 			<div class="nav-collapse collapse">
 				<ul class="nav">
-					<li><a href="/">@Messages("home")</a></li>
+					<li class="dropdown">
+						<a href="#" class="dropdown-toggle" data-toggle="dropdown">@Messages("view")<b class="caret"></b></a>
+						<ul class="dropdown-menu">
+							<li><a href="/">@Messages("home")</a></li>
+							<li class="divider"></li>
+							@names.filter(_ != name).map{ name =>
+								<li><a href="/@name">@name</a></li>
+							}
+						</ul>
+					</li>
 					<li class="dropdown">
 						<a href="#" class="dropdown-toggle" data-toggle="dropdown">@Messages("language")<b class="caret"></b></a>
 						<ul class="dropdown-menu">
@@ -102,7 +111,7 @@ $(document).ready(function() {
 				</ul>
 			</div><!--/.nav-collapse -->
 			<div class="pull-right">
-				<button id="download" class="btn btn-info">@Messages("download")</button>
+				<button id="download" class="btn btn-info" disabled="disabled">@Messages("download")</button>
 				<button id="setting" class="btn btn-info">@Messages("setting")</button>
 			</div>
 		</div>
@@ -124,6 +133,4 @@ $(document).ready(function() {
 	</div>
 </div>
 <div id="message"><div>@Messages("analyzing")</div></div>
-<div class="max-mm">test1</div>
-<div class="max-ms">test2</div>
 }

@@ -19,7 +19,8 @@ if (typeof(flect.app.loganalyzer) == "undefined") flect.app.loganalyzer = {};
 		});
 	}
 	function Chart(app, elementId) {
-		var currentData = null, currentKind = null, lineCol = "ms";
+		var currentData = currentKind = null,
+			lineCol = "ms";
 		
 		function lineName() {
 			var suffix = lineCol.toUpperCase();
@@ -41,8 +42,8 @@ if (typeof(flect.app.loganalyzer) == "undefined") flect.app.loganalyzer = {};
 			if (!data || !data.cnt1) {
 				return;
 			}
-			currentData = data;
 			currentKind = kind;
+			currentData = data;
 			
 			var bar1 = {
 				"data" : [],
@@ -68,7 +69,12 @@ if (typeof(flect.app.loganalyzer) == "undefined") flect.app.loganalyzer = {};
 				line1.data.push([i - 1, v2]);
 				ticks.push([i - 1, app.convertTime(i)]);
 			}
+			var title = data.name;
+			if (title.length > 50) {
+				title = title.substring(0, 50) + "...";
+			}
 			Flotr.draw(document.getElementById(elementId), [bar1, line1], {
+				"title" : title,
 				"mouse" : {
 					"track" : true,
 					"trackFormatter" : function(obj) {
@@ -341,6 +347,7 @@ if (typeof(flect.app.loganalyzer) == "undefined") flect.app.loganalyzer = {};
 			cntGrid.reload(str);
 			timeGrid.reload(str);
 			calendar.currentDate(date);
+			$("#download").removeAttr("disabled");
 		}
 		function drawChart(kind, data) {
 			chart.draw(kind, data);

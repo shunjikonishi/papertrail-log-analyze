@@ -12,39 +12,20 @@ import play.api.data.Form;
 //import play.api.data.Forms._;
 import play.api.data.Forms.mapping;
 import play.api.data.Forms.text;
-
 import play.api.Play.current;
-import play.api.libs.concurrent.Akka;
 import play.api.libs.json.Json.toJson;
-import play.api.libs.json.JsValue;
 
-//import collection.JavaConversions._;
-import collection.JavaConversions.mapAsScalaMap;
-import collection.JavaConversions.asScalaBuffer;
-
-import java.io.ByteArrayInputStream;
-import java.util.Calendar;
-import java.util.Locale;
 import java.util.TimeZone;
-import com.amazonaws.AmazonClientException;
-import com.amazonaws.AmazonServiceException;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.services.s3.model.S3Object;
-import com.amazonaws.services.s3.model.ObjectListing;
-import com.amazonaws.services.s3.model.ObjectMetadata;
 
 import org.apache.commons.codec.binary.Base64;
 
-import jp.co.flect.papertrail.LogAnalyzer;
 import jp.co.flect.papertrail.Counter;
 import jp.co.flect.net.IPFilter;
 
 import models.JqGrid;
-import models.CacheManager;
-import models.CacheManager.CacheStatus;
-import models.CacheManager.Summary;
-import models.CacheManager.DateKey;
+import models.LogManager;
+import models.LogManager.LogStatus;
+import models.LogManager.DateKey;
 
 object Application extends Controller {
 	
@@ -53,14 +34,12 @@ object Application extends Controller {
 		TimeZone.setDefault(TimeZone.getTimeZone(str));
 	};
 	
-	private val ACCESS_KEY = sys.env("S3_ACCESSKEY");
-	private val SECRET_KEY = sys.env("S3_SECRETKEY");
 	private val ARCHIVES = sys.env.filterKeys(_.startsWith("PAPERTRAIL_ARCHIVE_"))
 		.map{ case(key, value) =>
 			val newKey = key.substring("PAPERTRAIL_ARCHIVE_".length).toLowerCase;
 			val (bucket, dir) = value.span(_ != '/');
 			
-			val newValue = ArchiveInfo(newKey, bucket,
+			val newValue = LogManager(newKey, bucket,
 				if (dir.isEmpty) "papertrail/logs" else dir.substring(1)
 			);
 			(newKey, newValue);
@@ -122,7 +101,7 @@ object Application extends Controller {
 		}
 	}
 	
-	private def bucketCheck(name: String)(f: ArchiveInfo => Result) = {
+	private def bucketCheck(name: String)(f: LogManager => Result) = {
 		ARCHIVES.get(name).map(f(_)).getOrElse(NotFound);
 	}
 	
@@ -135,9 +114,9 @@ object Application extends Controller {
 	}
 	
 	def loganalyzer(name: String) = filterAction { implicit request =>
-		bucketCheck(name) { info =>
+		bucketCheck(name) { man =>
 			val offset = TimeZone.getDefault().getRawOffset() / (60 * 60 * 1000);
-			Ok(views.html.loganalyzer(name, offset));
+			Ok(views.html.loganalyzer(name, offset, ARCHIVES.keySet));
 		}
 	}
 	
@@ -145,155 +124,55 @@ object Application extends Controller {
 	def responsetime(name: String) = jqGridData(name, Counter.Type.Time);
 	
 	private def jqGridData(name: String, counterType: Counter.Type) = filterAction { implicit request =>
-		bucketCheck(name) { info =>
+		bucketCheck(name) { man =>
 			val key = dateForm.bindFromRequest;
 			if (key.hasErrors) {
 				Ok(toJson(JqGrid.empty));
 			} else {
-				val summary = CacheManager(info.name).get(key.get);
-				summary.status match {
-					case CacheStatus.Ready =>
-						Ok(toJson(JqGrid.data(summary.csv(counterType))));
-					case _ =>
-						NotFound;
-				}
+				man.csv(key.get, counterType).map( csv =>
+					Ok(toJson(JqGrid.data(csv)))
+				).getOrElse(NotFound);
 			}
 		}
 	}
 	
 	def show(name: String, date: String) = filterAction { implicit request =>
-		bucketCheck(name) { info =>
+		bucketCheck(name) { man =>
 			val key = DateKey(date);
-			val summary = CacheManager(info.name).get(key);
-			summary.status match {
-				case CacheStatus.Ready =>
-					Ok(summary.fullcsv);
-				case _ =>
-					NotFound;
-			}
+			man.fullcsv(key).map(Ok(_)).getOrElse(NotFound);
 		}
 	}
 	
 	def status(name: String) = filterAction { implicit request =>
-		bucketCheck(name) { info =>
-			val man = CacheManager(info.name);
-			val key = dateForm.bindFromRequest.get;
-			val summary = man.get(key);
-			summary.status match {
-				case CacheStatus.Unprocessed =>
-					try {
-						checkS3(info, key);
-					} catch {
-						case e: Exception => 
-							e.printStackTrace();
-							Ok(CacheStatus.Error.toString);
-					}
-				case CacheStatus.Found | CacheStatus.Ready =>
-					Ok(summary.status.toString);
-				case CacheStatus.Error =>
-					man.remove(key);
-					Ok(summary.status.toString);
-				case CacheStatus.NotFound =>
-					throw new IllegalStateException();
+		bucketCheck(name) { man =>
+			val key = dateForm.bindFromRequest;
+			if (key.hasErrors) {
+				BadRequest;
+			} else {
+				val status = man.status(key.get);
+				status match {
+					case LogStatus.Unprocessed =>
+						Ok(man.process(key.get).toString);
+					case LogStatus.Found | LogStatus.Ready =>
+						Ok(status.toString);
+					case LogStatus.Error =>
+						man.resetStatus(key.get);
+						Ok(status.toString);
+					case LogStatus.NotFound =>
+						throw new IllegalStateException();
+				}
 			}
 		}
 	}
 	
-	private def checkS3(info: ArchiveInfo, key: DateKey) = {
-		val client = new AmazonS3Client(new BasicAWSCredentials(ACCESS_KEY, SECRET_KEY));
-		val list = client.listObjects(info.bucket, info.directory + key.toDirectory);
-		if (list.getObjectSummaries() == null || list.getObjectSummaries().size() == 0) {
-			Ok(CacheStatus.NotFound.toString);
-		} else {
-			val summary = new Summary(CacheStatus.Found, null, null);
-			CacheManager(info.name).put(key, summary);
-			Akka.future {
-				processCSV(client, info, list, key);
-			}
-			Ok(CacheStatus.Found.toString);
-		}
-	}
-	
-	private def processCSV(client: AmazonS3Client, info: ArchiveInfo, list: ObjectListing, key: DateKey) = {
-		if (list.getObjectSummaries().exists { obj =>
-			obj.getKey().endsWith("/summary.csv");
-		}) {
-			downloadCSV(client, info, key);
-		} else {
-			try {
-				prepareCSV(client, info, key);
-			} catch {
-				case e: Throwable => 
-					e.printStackTrace();
-					CacheManager(info.name).put(key, Summary(CacheStatus.Error));
+	def removeSummary(name: String) = filterAction { implicit request =>
+		bucketCheck(name) { man =>
+			val key = dateForm.bindFromRequest;
+			if (key.hasErrors) {
+				BadRequest;
+			} else {
+				Ok(man.removeSummary(key.get).toString);
 			}
 		}
 	}
-	
-	private def downloadCSV(client: AmazonS3Client, info: ArchiveInfo, key: DateKey) = {
-	}
-	
-	private def prepareCSV(client: AmazonS3Client, info: ArchiveInfo, key: DateKey) = {
-		val t = System.currentTimeMillis;
-		val args = Array(
-			"-al",
-			"-ac",
-			"-sl", "1000",
-			"-sc", "20",
-			//"-rp",
-			"-ce",
-			"-se",
-			"-ds",
-			"-pg",
-			//"-pt",
-			//"-rg",
-			"-he",
-			"-rt",
-				"/e-ink/product/\\d+",
-				"/e-ink/select/author/\\d+",
-				"/e-ink/select/genre/\\d+",
-				"/e-ink/select/genre/\\d+/\\d+",
-				"/mobile/product/\\d+",
-				"/mobile/select/author/\\d+",
-				"/mobile/select/genre/\\d+",
-				"/mobile/select/genre/\\d+/\\d+",
-				"/pc/product/\\d+",
-				"/pc/select/author/\\d+",
-				"/pc/select/genre/\\d+",
-				"/pc/select/genre/\\d+/\\d+",
-				"/ebook/detail/[^/]+",
-				"/accounts/\\d+",
-				"/accounts/\\d+/edit",
-				"/contents/\\d+",
-				"/account_contents/\\d+",
-				"/account_contents/\\d+/edit",
-				"/contents/\\d+/license_infos",
-				"/api4int/query_password/[^/]+",
-				"/api4int/activate/[^/]+",
-				"/contents_upload_logs/\\d+",
-			//"-rn",
-			"-ct",
-			"-ss",
-			"-dt",
-			"-s3", ACCESS_KEY, SECRET_KEY, info.bucket, info.directory, key.toDateStr
-		);
-		val analyzer = LogAnalyzer.process(args);
-		Logger.info("Analize: " + info.name + "-" + key.toDateStr + "(" + (System.currentTimeMillis - t) + "ms)");
-		
-		val countCsv = analyzer.toString(Counter.Type.Count, "\t");
-		val timeCsv = analyzer.toString(Counter.Type.Time, "\t");
-		val summary = Summary(CacheStatus.Ready, countCsv, timeCsv);
-		/*
-		val data = summary.fullcsv.getBytes("utf-8");
-		val meta = new ObjectMetadata();
-		meta.setContentLength(data.length);
-		client.putObject(Bucket, Base + key + "/summary.csv", 
-			new ByteArrayInputStream(data),
-			meta);
-		*/
-		CacheManager(info.name).put(key, summary);
-	}
-	
-	case class ArchiveInfo(name: String, bucket: String, directory: String);
-	
 }
