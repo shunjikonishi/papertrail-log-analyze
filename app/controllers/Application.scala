@@ -110,7 +110,7 @@ object Application extends Controller {
 		"date" -> text
 	)(DateKey.apply)(DateKey.unapply));
 	
-	def index = filterAction { request =>
+	def index = filterAction { implicit request =>
 		Ok(views.html.index(ARCHIVES.keySet));
 	}
 	

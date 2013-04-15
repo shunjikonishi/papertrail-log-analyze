@@ -8,6 +8,7 @@ counter.connectTime=Connect time
 counter.dynoBoot=Dyno boot time
 counter.dynoStateChanged=Dyno state changed
 counter.herokuError=By Heroku Error
+counter.other=Other
 counter.path=Path
 counter.pattern=Pattern
 counter.program=By Program

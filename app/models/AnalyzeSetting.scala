@@ -5,8 +5,6 @@ import play.api.libs.json.JsValue;
 import play.api.libs.json.JsNumber;
 import play.api.libs.json.JsBoolean;
 import play.api.libs.json.JsArray;
-import play.api.i18n.Messages;
-import play.api.i18n.Lang;
 
 import scala.io.Source;
 import java.io.File;
@@ -19,45 +17,54 @@ object AnalyzeSetting {
 	
 	private val counterMap: Map[String, JsonWrapper => Counter] = Map(
 		"allLog" -> { option => 
-			new AllLogCounter(Messages("counter.allLog"));
+			new AllLogCounter("counter.allLog");
 		}, "allAccess" -> { option =>
-			new AccessCounter(Messages("counter.allAccess"));
+			new AccessCounter("counter.allAccess");
 		}, "slowRequest" -> { option =>
 			val threshold = option.getAsInt("threshold", 1000);
-			new SlowRequestCounter(Messages("counter.slowRequest", threshold), threshold);
+			new SlowRequestCounter("counter.slowRequest" + "," + threshold, threshold);
 		}, "slowConnect" -> { option =>
 			val threshold = option.getAsInt("threshold", 20);
-			new SlowConnectCounter(Messages("counter.slowConnect", threshold), threshold);
+			new SlowConnectCounter("counter.slowConnect" + "," + threshold, threshold);
 		}, "serverError" -> { option =>
-			new ServerErrorCounter(Messages("counter.serverError"));
+			new ServerErrorCounter("counter.serverError");
 		}, "clientError" -> { option =>
-			new ClientErrorCounter(Messages("counter.clientError"));
+			new ClientErrorCounter("counter.clientError");
 		}, "herokuError" -> { option =>
-			new HerokuErrorCounter(Messages("counter.herokuError"));
+			new HerokuErrorCounter("counter.herokuError");
 		}, "dynoStateChanged" -> { option =>
-			new DynoStateChangedCounter(Messages("counter.dynoStateChanged"));
+			new DynoStateChangedCounter("counter.dynoStateChanged");
 		}, "program" -> { option =>
-			new ProgramCounter(Messages("counter.program"));
+			new ProgramCounter("counter.program");
 		}, "responseTime" -> { option =>
-			val ret = new ResponseTimeCounter(Messages("counter.responseTime"), Messages("counter.allAccess"));
+			val ret = new ResponseTimeCounter("counter.responseTime", "counter.allAccess", "counter.other");
 			option.getAsStringArray("pattern").foreach(ret.addPattern(_));
 			option.getAsStringArray("exclude").foreach(ret.addExclude(_));
 			
 			val includeConnectTime = option.getAsBoolean("includeConnectTime", false);
 			ret.setIncludeConnectTime(includeConnectTime);
+			
+			val maxGroup = option.getAsInt("maxGroup", 0);
+			ret.setMaxGroup(maxGroup);
+			
 			ret;
 		}, "connectTime" -> { option =>
-			new ConnectTimeCounter(Messages("counter.connectTime"));
+			new ConnectTimeCounter("counter.connectTime");
 		}, "slowSQL" -> { option =>
 			val includeCopy = option.getAsBoolean("includeCopy", true);
+			val packCopy = option.getAsBoolean("packCopy", false);
 			val duration = option.getAsInt("duration", 50);
-			val ret = new PostgresDurationCounter(Messages("counter.slowSQL", duration), Messages("counter.allSQL"));
+			val maxGroup = option.getAsInt("maxGroup", 0);
+			val ret = new PostgresDurationCounter("counter.slowSQL" + "," + duration, "counter.allSQL", "counter.other");
 			
 			ret.setIncludeCopy(includeCopy);
+			ret.setPackCopy(packCopy);
 			ret.setTargetDuration(duration);
+			ret.setMaxGroup(maxGroup);
+			
 			ret;
 		}, "dynoBoot" -> { option =>
-			new DynoBootTimeCounter(Messages("counter.dynoBoot"));
+			new DynoBootTimeCounter("counter.dynoBoot");
 		}
 	);
 	
@@ -102,7 +109,7 @@ class AnalyzeSetting(setting: JsValue, val lastModified: Date) {
 	
 	import AnalyzeSetting._;
 	
-	def create(implicit lang: Lang) = {
+	def create = {
 		val ret = new LogAnalyzer();
 		(setting \ "counters") match {
 			case JsArray(v) => {

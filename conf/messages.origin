@@ -126,3 +126,6 @@ counter.allAccess[ja]=すべてのアクセス
 
 counter.allSQL=All sql
 counter.allSQL[ja]=すべての遅延SQL
+
+counter.other=Other
+counter.other[ja]=その他

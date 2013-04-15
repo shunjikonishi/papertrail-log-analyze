@@ -8,6 +8,7 @@ counter.connectTime=接続時間
 counter.dynoBoot=Dyno起動時間
 counter.dynoStateChanged=Dynoステート変更
 counter.herokuError=Herokuエラー別
+counter.other=その他
 counter.path=パス
 counter.pattern=パターン
 counter.program=プログラム別

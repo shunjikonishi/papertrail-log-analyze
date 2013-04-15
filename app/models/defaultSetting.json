@@ -46,7 +46,14 @@
 				"/api4int/activate/[^/]+",
 				"/contents_upload_logs/\\d+",
 				"/users/\\d+"
-			]
+			],
+			"exclude" : [
+				"/public/.*"
+			],
+			"maxGroup" : 1000
+		},
+		"slowSQL" : {
+			"maxGroup" : 1000
 		}
 	}
 }

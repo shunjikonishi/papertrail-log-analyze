@@ -4,6 +4,8 @@ import java.io.File;
 import play.api.Logger;
 import play.api.cache.Cache;
 import play.api.Play.current;
+import play.api.i18n.Lang;
+import play.api.i18n.Messages;
 import jp.co.flect.papertrail.LogAnalyzer;
 import jp.co.flect.papertrail.Counter;
 import jp.co.flect.papertrail.S3Archive;
@@ -69,20 +71,42 @@ class LogManager(val name: String, bucket: String, directory: String) {
 	}
 	
 	def status(key: DateKey) = CacheManager(name).get(key).status;
-	def csv(key: DateKey, counterType: Counter.Type) = {
+	def csv(key: DateKey, counterType: Counter.Type)(implicit lang: Lang) = {
 		val summary = CacheManager(name).get(key);
 		summary.status match {
-			case LogStatus.Ready => Some(summary.csv(counterType));
+			case LogStatus.Ready => Some(localize(summary.csv(counterType)));
 			case _ => None;
 		}
 	}
 	
-	def fullcsv(key: DateKey) = {
+	def fullcsv(key: DateKey)(implicit lang: Lang) = {
 		val summary = CacheManager(name).get(key);
 		summary.status match {
-			case LogStatus.Ready => Some(summary.fullcsv);
+			case LogStatus.Ready => Some(localize(summary.fullcsv));
 			case _ => None;
 		}
+	}
+	
+	def localize(csv: String)(implicit lang: Lang) = {
+		val source = Source.fromString(csv);
+		source.getLines.map { row =>
+			val cols = row.split("\t");
+			cols.toList match {
+				case Nil => "";
+				case name :: others =>
+					val newName = if (name.trim.startsWith("counter.")) {
+						val blank = name.takeWhile(_ == ' ');
+						val keys = name.trim.split(",");
+						keys.toList match {
+							case x :: Nil => blank + Messages(x);
+							case x :: xs => blank + Messages(x, xs: _*);
+						};
+					} else {
+						name;
+					}
+					(newName :: others).mkString("\t");
+			}
+		}.mkString("\n");
 	}
 	
 	private def summaryFileName(key: DateKey) = directory + key.toDirectory + "/summary.csv";
@@ -128,8 +152,7 @@ class LogManager(val name: String, bucket: String, directory: String) {
 	private def processCSV(client: AmazonS3Client, list: ObjectListing, key: DateKey) = {
 		try {
 			if (list.getObjectSummaries().exists { obj =>
-				//obj.getKey().endsWith("/summary.csv") && obj.getLastModified.getTime > setting.lastModified.getTime;
-				false;
+				obj.getKey().endsWith("/summary.csv") && obj.getLastModified.getTime > setting.lastModified.getTime;
 			}) {
 				downloadCSV(client, key);
 			} else {
