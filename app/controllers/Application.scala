@@ -23,6 +23,7 @@ import jp.co.flect.papertrail.Counter;
 import jp.co.flect.net.IPFilter;
 
 import models.JqGrid;
+import models.JqGrid.GridSort;
 import models.LogManager;
 import models.LogManager.LogStatus;
 import models.LogManager.DateKey;
@@ -110,6 +111,11 @@ object Application extends Controller {
 		"date" -> text
 	)(DateKey.apply)(DateKey.unapply));
 	
+	private val gridSortForm = Form(mapping(
+		"sidx" -> text,
+		"sord" -> text
+	)(GridSort.apply)(GridSort.unapply));
+	
 	def index = filterAction { implicit request =>
 		Ok(views.html.index(ARCHIVES.keySet));
 	}
@@ -130,8 +136,9 @@ object Application extends Controller {
 			if (key.hasErrors) {
 				Ok(toJson(JqGrid.empty));
 			} else {
+				val sort = gridSortForm.bindFromRequest;
 				man.csv(key.get, counterType).map( csv =>
-					Ok(toJson(JqGrid.data(csv)))
+					Ok(toJson(JqGrid.data(csv, sort.get)))
 				).getOrElse(NotFound);
 			}
 		}

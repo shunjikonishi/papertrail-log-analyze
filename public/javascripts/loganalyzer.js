@@ -239,6 +239,9 @@ if (typeof(flect.app.loganalyzer) == "undefined") flect.app.loganalyzer = {};
 					var data = grid.getRowData(rowid);
 					app.drawChart(kind, data);
 				}
+			},
+			"onSortCol" : function(a, b, c) {
+				console.log(a + ", " + b + ", " + c);
 			}
 		}).jqGrid('gridResize', { "minWidth" : 400, "minHeight" : 100});
 		var groupHeaders = [];
