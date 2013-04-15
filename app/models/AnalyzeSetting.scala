@@ -6,7 +6,9 @@ import play.api.libs.json.JsNumber;
 import play.api.libs.json.JsBoolean;
 import play.api.libs.json.JsArray;
 import play.api.i18n.Messages;
+import play.api.i18n.Lang;
 
+import scala.io.Source;
 import java.io.File;
 import java.util.Date;
 import jp.co.flect.papertrail.LogAnalyzer;
@@ -59,62 +61,16 @@ object AnalyzeSetting {
 		}
 	);
 	
-	private val defaultSetting = """{
-	"counters" : [
-		"allLog",
-		"allAccess",
-		"slowRequest",
-		"slowConnect",
-		"serverError",
-		"clientError",
-		"dynoStateChanged",
-		"program",
-		"herokuError",
-		"responseTime",
-		"connectTime",
-		"slowSQL",
-		"dynoBoot"
-	],
-	"options" : {
-		"slowRequest" : {
-			"threshold" : 1000
-		},
-		"slowConnect" : {
-			"threshold" : 1000
-		},
-		"responseTime" : {
-			"pattern" : [
-				"/e-ink/product/\\d+",
-				"/e-ink/select/author/\\d+",
-				"/e-ink/select/genre/\\d+",
-				"/e-ink/select/genre/\\d+/\\d+",
-				"/mobile/product/\\d+",
-				"/mobile/select/author/\\d+",
-				"/mobile/select/genre/\\d+",
-				"/mobile/select/genre/\\d+/\\d+",
-				"/pc/product/\\d+",
-				"/pc/select/author/\\d+",
-				"/pc/select/genre/\\d+",
-				"/pc/select/genre/\\d+/\\d+",
-				"/ebook/detail/[^/]+",
-				"/accounts/\\d+",
-				"/accounts/\\d+/edit",
-				"/contents/\\d+",
-				"/account_contents/\\d+",
-				"/account_contents/\\d+/edit",
-				"/contents/\\d+/license_infos",
-				"/api4int/query_password/[^/]+",
-				"/api4int/activate/[^/]+",
-				"/contents_upload_logs/\\d+"
-			]
-		}
-	}
-}""";
-	
 	def apply(json: String, lastModified: Date) = new AnalyzeSetting(Json.parse(json), lastModified);
-	def getDefault = {
-		val date = new Date(new File("app/models/AnalyzeSetting.scala").lastModified);
-		apply(defaultSetting, date);
+	
+	lazy val defaultSetting = {
+		val file = new File("app/models/defaultSetting.json");
+		val source = Source.fromFile(file, "utf-8");
+		try {
+			apply(source.mkString, new Date(file.lastModified));
+		} finally {
+			source.close;
+		}
 	}
 	
 	private class JsonWrapper(value: JsValue) {
@@ -146,7 +102,7 @@ class AnalyzeSetting(setting: JsValue, val lastModified: Date) {
 	
 	import AnalyzeSetting._;
 	
-	def create = {
+	def create(implicit lang: Lang) = {
 		val ret = new LogAnalyzer();
 		(setting \ "counters") match {
 			case JsArray(v) => {

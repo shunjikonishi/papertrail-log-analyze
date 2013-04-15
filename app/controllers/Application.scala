@@ -33,6 +33,7 @@ object Application extends Controller {
 	sys.env.get("TIMEZONE").foreach { str =>
 		TimeZone.setDefault(TimeZone.getTimeZone(str));
 	};
+	java.util.Locale.setDefault(new java.util.Locale("en", "US"));
 	
 	private val ARCHIVES = sys.env.filterKeys(_.startsWith("PAPERTRAIL_ARCHIVE_"))
 		.map{ case(key, value) =>

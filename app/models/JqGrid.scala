@@ -16,16 +16,16 @@ object JqGrid {
 	}
 	
 	def data(csv: String) = {
-		var idx = 0;
 		val rows = csv.split("\n");
-		val data = rows.map{ row =>
+		val data = rows.foldLeft[List[Map[String, JsValue]]](List.empty) { (list, row) =>
 			val cols = row.split("\t");
-			idx += 1;
-			Map(
-				"id" -> toJson("log-" + idx),
+			val map = Map(
+				"id" -> toJson("log-" + (list.size + 1)),
 				"cell" -> toJson(normalize(cols))
 			);
-		};
+			map :: list
+		}.reverse;
+		
 		Map(
 			"start" -> toJson(1),
 			"total" -> toJson(1),
@@ -37,6 +37,7 @@ object JqGrid {
 	
 	private def normalize(cols: Array[String]): Array[String] = {
 		if (cols.length == 76) {
+			//Brint total columns to second
 			cols.slice(0, 1) ++ cols.slice(73, 76) ++ cols.slice(1, 73)
 		} else {
 			cols

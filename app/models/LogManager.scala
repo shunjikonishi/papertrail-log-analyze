@@ -65,7 +65,7 @@ class LogManager(val name: String, bucket: String, directory: String) {
 			case e: Exception =>
 				e.printStackTrace;
 		}
-		AnalyzeSetting.getDefault;
+		AnalyzeSetting.defaultSetting;
 	}
 	
 	def status(key: DateKey) = CacheManager(name).get(key).status;
@@ -128,8 +128,8 @@ class LogManager(val name: String, bucket: String, directory: String) {
 	private def processCSV(client: AmazonS3Client, list: ObjectListing, key: DateKey) = {
 		try {
 			if (list.getObjectSummaries().exists { obj =>
-println("test: " + obj.getKey + ", " + obj.getLastModified + ", " + setting.lastModified);
-				obj.getKey().endsWith("/summary.csv") && obj.getLastModified.getTime > setting.lastModified.getTime;
+				//obj.getKey().endsWith("/summary.csv") && obj.getLastModified.getTime > setting.lastModified.getTime;
+				false;
 			}) {
 				downloadCSV(client, key);
 			} else {
