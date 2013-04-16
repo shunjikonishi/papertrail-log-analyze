@@ -12,6 +12,8 @@ import play.api.data.Form;
 //import play.api.data.Forms._;
 import play.api.data.Forms.mapping;
 import play.api.data.Forms.text;
+import play.api.data.Forms.number;
+import play.api.data.Forms.boolean;
 import play.api.Play.current;
 import play.api.libs.json.Json.toJson;
 
@@ -112,8 +114,8 @@ object Application extends Controller {
 	)(DateKey.apply)(DateKey.unapply));
 	
 	private val gridSortForm = Form(mapping(
-		"sidx" -> text,
-		"sord" -> text
+		"col" -> number(min=0,max=75),
+		"asc" -> boolean
 	)(GridSort.apply)(GridSort.unapply));
 	
 	def index = filterAction { implicit request =>

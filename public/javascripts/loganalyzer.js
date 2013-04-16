@@ -169,8 +169,10 @@ if (typeof(flect.app.loganalyzer) == "undefined") flect.app.loganalyzer = {};
 				"defaultValue" : ""
 			},
 			"align" : "right"
-		};
-		var labels = [MSG.name],
+		},
+			currentDate, cuurentSort, sortAsc, 
+			drawOnLoad = false,
+			labels = [MSG.name],
 			colModel = [{ "name" : "name", "width" : 200}];
 		for (var i=0; i<25; i++) {
 			var suffix = i == 0 ? "All" : i;
@@ -225,23 +227,39 @@ if (typeof(flect.app.loganalyzer) == "undefined") flect.app.loganalyzer = {};
 						grid.jqGrid("setCell", rowid, "ms" + msIdx, "", "max-ms");
 					}
 				}
-				if (kind.drawOnLoad) {
+				if (drawOnLoad && kind.drawOnLoad) {
 					setTimeout(function() {
 						var data = grid.jqGrid("getRowData", kind.drawOnLoad);
 						if (data && data.name) {
 							app.drawChart(kind, data);
 						}
 					}, 0);
+					drawOnLoad = false;
 				}
 			},
 			"onSelectRow" : function(rowid, status, e) {
-				if (rowid && status) {
+				if (rowid) {
 					var data = grid.getRowData(rowid);
 					app.drawChart(kind, data);
 				}
 			},
-			"onSortCol" : function(a, b, c) {
-				console.log(a + ", " + b + ", " + c);
+			"onSortCol" : function(index, iCol, order) {
+				var col = iCol;
+				//Bug of jqGrid, when using frozen columns
+				switch (index) {
+					case "name"   : col =0; break;
+					case "cntAll" : col =1; break;
+					case "mmAll"  : col =2; break;
+					case "msAll"  : col =3; break;
+				}
+				var asc = col == 0;
+				if (col == currentSort) {
+					asc = !sortAsc;
+				}
+				setTimeout(function() {
+					sort(col, asc);
+				}, 0);
+				return "stop";
 			}
 		}).jqGrid('gridResize', { "minWidth" : 400, "minHeight" : 100});
 		var groupHeaders = [];
@@ -260,9 +278,18 @@ if (typeof(flect.app.loganalyzer) == "undefined") flect.app.loganalyzer = {};
 		}).jqGrid('setFrozenColumns');
 		
 		function reload(str) {
+			currentDate = str;
+			drawOnLoad = true;
+			sort(0, true);
+		}
+		function sort(col, asc) {
+			currentSort = col;
+			sortAsc = asc;
 			grid.jqGrid("setGridParam", {
 				"postData" : {
-					"date" : str
+					"date" : currentDate,
+					"col" : col,
+					"asc" : asc
 				}
 			}).trigger("reloadGrid");
 		}
