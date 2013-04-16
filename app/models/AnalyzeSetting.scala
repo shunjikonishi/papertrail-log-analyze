@@ -5,68 +5,89 @@ import play.api.libs.json.JsValue;
 import play.api.libs.json.JsNumber;
 import play.api.libs.json.JsBoolean;
 import play.api.libs.json.JsArray;
+import play.api.libs.json.JsString;
 
+import scala.collection.mutable.ListBuffer;
 import scala.io.Source;
 import java.io.File;
 import java.util.Date;
 import jp.co.flect.papertrail.LogAnalyzer;
 import jp.co.flect.papertrail.Counter;
-import jp.co.flect.papertrail.counter._;
 
 object AnalyzeSetting {
 	
-	private val counterMap: Map[String, JsonWrapper => Counter] = Map(
+	import jp.co.flect.papertrail.counter._;
+	
+	private val counterMap: Map[String, JsonWrapper => List[Counter]] = Map(
+		//LogCount
 		"allLog" -> { option => 
-			new AllLogCounter("counter.allLog");
+			new AllLogCounter("counter.allLog") :: Nil;
 		}, "allAccess" -> { option =>
-			new AccessCounter("counter.allAccess");
+			new AccessCounter("counter.allAccess") :: Nil;
 		}, "slowRequest" -> { option =>
 			val threshold = option.getAsInt("threshold", 1000);
-			new SlowRequestCounter("counter.slowRequest" + "," + threshold, threshold);
+			new SlowRequestCounter("counter.slowRequest" + "," + threshold, threshold) :: Nil;
 		}, "slowConnect" -> { option =>
 			val threshold = option.getAsInt("threshold", 20);
-			new SlowConnectCounter("counter.slowConnect" + "," + threshold, threshold);
+			new SlowConnectCounter("counter.slowConnect" + "," + threshold, threshold) :: Nil;
 		}, "serverError" -> { option =>
-			new ServerErrorCounter("counter.serverError");
+			new ServerErrorCounter("counter.serverError") :: Nil;
 		}, "clientError" -> { option =>
-			new ClientErrorCounter("counter.clientError");
+			new ClientErrorCounter("counter.clientError") :: Nil;
 		}, "herokuError" -> { option =>
-			new HerokuErrorCounter("counter.herokuError");
+			new HerokuErrorCounter("counter.herokuError") :: Nil;
 		}, "dynoStateChanged" -> { option =>
-			new DynoStateChangedCounter("counter.dynoStateChanged");
+			new DynoStateChangedCounter("counter.dynoStateChanged") :: Nil;
 		}, "program" -> { option =>
-			new ProgramCounter("counter.program");
+			new ProgramCounter("counter.program") :: Nil;
+		/*
+		}, "regexCount" -> { option =>
+			option.map
+			new ProgramCounter("counter.program") :: Nil;
+		*/
+		//ResponseTime
 		}, "responseTime" -> { option =>
 			val ret = new ResponseTimeCounter("counter.responseTime", "counter.allAccess", "counter.other");
-			option.getAsStringArray("pattern").foreach(ret.addPattern(_));
-			option.getAsStringArray("exclude").foreach(ret.addExclude(_));
-			
 			val includeConnectTime = option.getAsBoolean("includeConnectTime", false);
 			ret.setIncludeConnectTime(includeConnectTime);
+			applyTimedGroupOption(ret, option);
 			
-			val maxGroup = option.getAsInt("maxGroup", 0);
-			ret.setMaxGroup(maxGroup);
 			
-			ret;
+			ret :: Nil;
 		}, "connectTime" -> { option =>
-			new ConnectTimeCounter("counter.connectTime");
+			new ConnectTimeCounter("counter.connectTime") :: Nil;
 		}, "slowSQL" -> { option =>
 			val includeCopy = option.getAsBoolean("includeCopy", true);
 			val packCopy = option.getAsBoolean("packCopy", false);
 			val duration = option.getAsInt("duration", 50);
-			val maxGroup = option.getAsInt("maxGroup", 0);
 			val ret = new PostgresDurationCounter("counter.slowSQL" + "," + duration, "counter.allSQL", "counter.other");
 			
 			ret.setIncludeCopy(includeCopy);
 			ret.setPackCopy(packCopy);
 			ret.setTargetDuration(duration);
-			ret.setMaxGroup(maxGroup);
+			applyTimedGroupOption(ret, option);
 			
-			ret;
+			ret :: Nil;
 		}, "dynoBoot" -> { option =>
-			new DynoBootTimeCounter("counter.dynoBoot");
+			new DynoBootTimeCounter("counter.dynoBoot") :: Nil;
+		/*
+		}, "regexNumber" -> { option =>
+			option.map
+			new ProgramCounter("counter.program") :: Nil;
+		*/
 		}
 	);
+	
+	private def applyTimedGroupOption(counter: TimedGroupCounter, option: JsonWrapper) = {
+		option.getAsStringArray("pattern").foreach{ str =>
+			str.split(",").toList match {
+				case x :: xs => counter.addPattern(x, xs.mkString(","));
+				case _ => counter.addPattern(str, str);
+			}
+		};
+		option.getAsStringArray("exclude").foreach(counter.addExclude(_));
+		counter.setMaxGroup(option.getAsInt("maxGroup", 0));
+	}
 	
 	def apply(json: String, lastModified: Date) = new AnalyzeSetting(Json.parse(json), lastModified);
 	
@@ -102,6 +123,16 @@ object AnalyzeSetting {
 				case _ => defaultValue;
 			}
 		}
+		
+		def getAsString(name: String, defaultValue: String) = {
+			(value \ name) match {
+				case JsArray(v) => v.map(_.as[String]).mkString("\n");
+				case JsString(v) => v;
+				case JsNumber(v) => v.toString;
+				case JsBoolean(v) => v.toString;
+				case _ => defaultValue;
+			}
+		}
 	}
 }
 
@@ -112,17 +143,40 @@ class AnalyzeSetting(setting: JsValue, val lastModified: Date) {
 	def create = {
 		val ret = new LogAnalyzer();
 		(setting \ "counters") match {
-			case JsArray(v) => {
-				v.foreach { el =>
+			case JsArray(v) =>
+				val list = v.foldLeft(new ListBuffer[Counter]()) { (list, el) =>
 					val name = el.as[String];
-					counterMap.get(name).foreach{ f =>
-						val option = new JsonWrapper(setting \ "options" \ name);
-						ret.add(f(option));
-					}
+					val option = new JsonWrapper(setting \ "options" \ name);
+					list ++= counterMap(name)(option);
 				}
-			}
+				list.foreach { counter =>
+					ret.add(counter);
+				}
 			case _ =>
 		}
 		ret;
 	}
+	
+	def checked(name: String) = {
+		(setting \ "counters") match {
+			case JsArray(v) if v.exists(_.as[String] == name) => "checked";
+			case _ => "";
+		}
+	}
+	
+	def option(name: String, defaultValue: String) = {
+		name.split("\\.").toList match {
+			case counterName :: propName :: Nil =>
+				new JsonWrapper(setting \ "options" \ counterName).getAsString(propName, defaultValue);
+			case _ => "";
+		}
+	}
+	
+	def optionChecked(name: String) = {
+		option(name, "") match {
+			case "true" => "checked";
+			case _ => "";
+		}
+	}
+	
 }

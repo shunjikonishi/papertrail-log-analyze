@@ -185,4 +185,10 @@ object Application extends Controller {
 			}
 		}
 	}
+	
+	def setting(name: String) = filterAction { implicit request =>
+		bucketCheck(name) { man =>
+			Ok(views.html.setting(man.setting));
+		}
+	}
 }

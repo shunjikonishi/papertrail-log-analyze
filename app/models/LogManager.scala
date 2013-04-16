@@ -55,7 +55,21 @@ class LogManager(val name: String, bucket: String, directory: String) {
 	import LogManager._;
 	import CacheManager.Summary;
 	
-	private lazy val setting = {
+	private var _setting: Option[AnalyzeSetting] = None;
+	
+	def setting: AnalyzeSetting = {
+		_setting match {
+			case Some(v) => v;
+			case None => setting(initializeSetting);
+		}
+	}
+	
+	def setting(v: AnalyzeSetting): AnalyzeSetting = {
+		_setting = Some(v);
+		v;
+	}
+	
+	private def initializeSetting = {
 		val client = new AmazonS3Client(new BasicAWSCredentials(ACCESS_KEY, SECRET_KEY));
 		try {
 			val obj = client.getObject(bucket, directory + "/analyze.json");

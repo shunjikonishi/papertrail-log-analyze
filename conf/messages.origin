@@ -70,6 +70,45 @@ ui.notFoundLog[ja]=ログが見つかりません
 ui.s3error=S3 access error
 ui.s3error[ja]=S3へのアクセスでエラーが発生しました
 
+ui.setting=Setting
+ui.setting[ja]=セッティング
+
+ui.ok=OK
+ui.ok[ja]=OK
+
+ui.cancel=Cancel
+ui.cancel[ja]=キャンセル
+
+displaySetting="View"
+displaySetting[ja]=表示
+
+responseTimeSetting=ResponseTime
+responseTimeSetting[ja]=レスポンスタイム
+
+slowSqlSetting=Slow SQL
+slowSqlSetting[ja]=遅延SQL
+
+regexSetting=Regex
+regexSetting[ja]=正規表現
+
+responseTime.includeConnect=Include connect time
+responseTime.includeConnect[ja]=接続時間を含める
+
+slowSQL.includeCopy=Include COPY statement
+slowSQL.includeCopy[ja]=COPYステートメントを含める
+
+slowSQL.packCopy=Pack COPY statement
+slowSQL.packCopy[ja]=COPYステートメントをまとめる
+
+maxGroup=The maximum number of output lines
+maxGroup[ja]=最大行数
+
+packPattern=Pack pattern
+packPattern[ja]=まとめるパターン
+
+excludePattern=Exclude pattern
+excludePattern[ja]=除外するパターン
+
 counter.allLog=All Log
 counter.allLog[ja]=すべてのログ
 
@@ -111,9 +150,6 @@ counter.regexGroup[ja]=正規表現グループ
 
 counter.pattern=Pattern
 counter.pattern[ja]=パターン
-
-counter.regexNumber=Regex Number
-counter.regexNumber[ja]=正規表現数値
 
 counter.connectTime=Connect time
 counter.connectTime[ja]=接続時間

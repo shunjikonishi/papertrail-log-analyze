@@ -297,6 +297,39 @@ if (typeof(flect.app.loganalyzer) == "undefined") flect.app.loganalyzer = {};
 			"reload" : reload
 		});
 	}
+	function SettingDialog(app, div) {
+		function show() {
+			div.load("/" + app.name + "/setting", function() {
+				$("#settingTabs").tabs();
+				div.dialog({
+					"title" : MSG.setting,
+					"buttons" : [
+						{
+							"text" : MSG.ok,
+							"click" : updateSetting
+						},
+						{
+							"text" : MSG.cancel,
+							"click" : function() { 
+								close();
+							}
+						}
+					],
+					"width" : "600px",
+					"modal" : true
+				});
+			});
+		}
+		function close() {
+			div.dialog("close").dialog("destroy").empty();
+		}
+		function updateSetting() {
+			close();
+		}
+		$.extend(this, {
+			"show" : show
+		});
+	}
 	//Enums
 	var CacheStatus = new Enum([
 		{ "name" : "Unprocessed"},
@@ -313,14 +346,6 @@ if (typeof(flect.app.loganalyzer) == "undefined") flect.app.loganalyzer = {};
 	
 	//Application
 	flect.app.loganalyzer.LogAnalyzer = function(name, timeOffset) {
-		$("#download").click(download);
-		$("#setting").click(function() {
-			alert("Not implemented yet");
-		});
-		$("#chartBtn").button().click(function() {
-			chart.changeLine();
-		});
-		
 		function download() {
 			var d = calendar.currentDate();
 			if (d) {
@@ -393,7 +418,15 @@ if (typeof(flect.app.loganalyzer) == "undefined") flect.app.loganalyzer = {};
 			calendar = new Calendar(this, $('#calendar')),
 			chart = new Chart(this, "mainChart");
 			cntGrid = new Grid(this, GridKind.Count, $("#cntGrid")), 
-			timeGrid = new Grid(this, GridKind.Time, $("#timeGrid"));
+			timeGrid = new Grid(this, GridKind.Time, $("#timeGrid")),
+			settingDialog = new SettingDialog(this, $("#settingDialog"));
+		$("#download").click(download);
+		$("#setting").click(function() {
+			settingDialog.show();
+		});
+		$("#chartBtn").button().click(function() {
+			chart.changeLine();
+		});
 		
 	}
 })(jQuery);
