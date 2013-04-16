@@ -15,12 +15,12 @@
 				<li>
 					<input name="counters" type="checkbox" value="slowRequest" @setting.checked("slowRequest")>
 					<label>@Messages("counter.slowRequest", "XX")</label>
-					<input name="slowRequestThreshold" class="number" maxlength="4" value="@setting.option("slowRequest.threshold", "1000")"> ms
+					<input name="slowRequest.threshold" class="number" maxlength="4" value="@setting.option("slowRequest.threshold", "1000")"> ms
 				</li>
 				<li>
 					<input name="counters" type="checkbox" value="slowConnect" @setting.checked("slowConnect")>
 					<label>@Messages("counter.slowConnect", "XX")</label>
-					<input name="slowConnectThreshold" class="number" maxlength="4" value="@setting.option("slowConnect.threshold", "20")"> ms
+					<input name="slowConnect.threshold" class="number" maxlength="4" value="@setting.option("slowConnect.threshold", "20")"> ms
 				</li>
 				<li><input name="counters" type="checkbox" value="serverError" @setting.checked("serverError")><label>@Messages("counter.serverError")</label></li>
 				<li><input name="counters" type="checkbox" value="clientError" @setting.checked("clientError")><label>@Messages("counter.clientError")</label></li>
@@ -38,7 +38,7 @@
 				<li>
 					<input name="counters" type="checkbox" value="slowSQL" @setting.checked("slowSQL")>
 					<label>@Messages("counter.slowSQL", "XX")</label>
-					<input name="slowSQLThreshold" class="number" maxlength="4" value="@setting.option("slowSQL.threshold", "50")"> ms
+					<input name="slowSQL.threshold" class="number" maxlength="4" value="@setting.option("slowSQL.threshold", "50")"> ms
 				</li>
 				<li><input name="counters" type="checkbox" value="dynoBoot" @setting.checked("dynoBoot")><label>@Messages("counter.dynoBoot")</label></li>
 				<li><input name="counters" type="checkbox" value="regexNumber" @setting.checked("regexNumber")><label>@Messages("counter.regexGroup")</label></li>
@@ -47,46 +47,46 @@
 	</div>
 	<div id="responseTimeSetting" class="setting">
 		<div>
-			<input type="checkbox" name="responseTime-includeConnect" value="true" @setting.optionChecked("responseTime.includeConnect")>
+			<input type="checkbox" name="responseTime.includeConnect" value="true" @setting.optionChecked("responseTime.includeConnect")>
 			<label>@Messages("responseTime.includeConnect")</label>
 		</div>
 		<div>
 			<label>@Messages("maxGroup") - </label>
-			<input name="responseTime-maxGroup" class="number" value="@setting.option("responseTime.maxGroup", "1000")">
+			<input name="responseTime.maxGroup" class="number" value="@setting.option("responseTime.maxGroup", "1000")">
 		</div>
 		<hr>
 		<div>
 			<label>@Messages("packPattern")</label><br>
-			<textarea name="responseTime-packPattern" rows="5">@setting.option("responseTime.pattern", "")</textarea>
+			<textarea name="responseTime.pattern" rows="5">@setting.option("responseTime.pattern", "")</textarea>
 		</div>
 		<hr>
 		<div>
 			<label>@Messages("excludePattern")</label><br>
-			<textarea name="responseTime-excludePattern" rows="5">@setting.option("responseTime.exclude", "")</textarea>
+			<textarea name="responseTime.exclude" rows="5">@setting.option("responseTime.exclude", "")</textarea>
 		</div>
 	</div>
 	<div id="slowSqlSetting" class="setting">
 		<div>
-			<input type="checkbox" name="slowSQL-includeCopy" value="true" @setting.optionChecked("slowSQL.includeCopy")>
+			<input type="checkbox" name="slowSQL.includeCopy" value="true" @setting.optionChecked("slowSQL.includeCopy")>
 			<label>@Messages("slowSQL.includeCopy")</label>
 		</div>
 		<div>
-			<input type="checkbox" name="slowSQL-packCopy" value="true" @setting.optionChecked("slowSQL.packCopy")>
+			<input type="checkbox" name="slowSQL.packCopy" value="true" @setting.optionChecked("slowSQL.packCopy")>
 			<label>@Messages("slowSQL.packCopy")</label>
 		</div>
 		<div>
 			<label>@Messages("maxGroup") - </label>
-			<input name="slowSQL-maxGroup" class="number" value="@setting.option("slowSQL.maxGroup", "1000")">
+			<input name="slowSQL.maxGroup" class="number" value="@setting.option("slowSQL.maxGroup", "1000")">
 		</div>
 		<hr>
 		<div>
 			<label>@Messages("packPattern")</label><br>
-			<textarea name="slowSQL-packPattern" rows="5">@setting.option("slowSQL.pattern", "")</textarea>
+			<textarea name="slowSQL.pattern" rows="5">@setting.option("slowSQL.pattern", "")</textarea>
 		</div>
 		<hr>
 		<div>
 			<label>@Messages("excludePattern")</label><br>
-			<textarea name="slowSQL-excludePattern" rows="5">@setting.option("slowSQL.exclude", "")</textarea>
+			<textarea name="slowSQL.exclude" rows="5">@setting.option("slowSQL.exclude", "")</textarea>
 		</div>
 	</div>
 	<div id="regexSetting" class="setting">

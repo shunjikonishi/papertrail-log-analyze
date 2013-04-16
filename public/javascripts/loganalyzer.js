@@ -324,6 +324,54 @@ if (typeof(flect.app.loganalyzer) == "undefined") flect.app.loganalyzer = {};
 			div.dialog("close").dialog("destroy").empty();
 		}
 		function updateSetting() {
+			var setting = {
+				"counters" : [],
+				"options" : {
+				}
+			};
+			div.find(":input").each(function() {
+				try {
+					var el = $(this);
+					var name = el.attr("name");
+					var value = el.val();
+					if (name == "counters") {
+						if (el.is(":checked")) {
+							setting.counters.push(value);
+						}
+					} else {
+						var opName = name.split(".");
+						var counterName = opName[0],
+							propName = opName[1];
+						if (!setting.options[counterName]) {
+							setting.options[counterName] = {};
+						}
+						var op = setting.options[counterName];
+						if (el.is(":checkbox")) {
+							op[propName] = el.is(":checked");
+						} else if (el.is(".number")) {
+							var n = parseInt(value, 10);
+							if (!n) {
+								throw "Invalid number: " + value;
+							}
+							op[propName] = n;
+						} else if (el.is("textarea")) {
+							if (value) {
+								var rows = value.split("\n");
+								for (var i=0; i<rows.length; i++) {
+									//Error check
+									new RegExp(rows[i]);
+								}
+								op[propName] = rows;
+							}
+						} else {
+							throw "Unknown parameter " + name;
+						}
+					}
+				} catch (e) {
+					alert(e);
+				}
+			})
+			console.log(JSON.stringify(setting));
 			close();
 		}
 		$.extend(this, {
