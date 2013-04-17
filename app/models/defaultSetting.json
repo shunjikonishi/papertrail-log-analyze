@@ -22,38 +22,14 @@
 			"threshold" : 20
 		},
 		"responseTime" : {
-			"pattern" : [
-				"/e-ink/product/\\d+",
-				"/e-ink/select/author/\\d+",
-				"/e-ink/select/genre/\\d+",
-				"/e-ink/select/genre/\\d+/\\d+",
-				"/mobile/product/\\d+",
-				"/mobile/select/author/\\d+",
-				"/mobile/select/genre/\\d+",
-				"/mobile/select/genre/\\d+/\\d+",
-				"/pc/product/\\d+",
-				"/pc/select/author/\\d+",
-				"/pc/select/genre/\\d+",
-				"/pc/select/genre/\\d+/\\d+",
-				"/ebook/detail/[^/]+",
-				"/accounts/\\d+",
-				"/accounts/\\d+/edit",
-				"/contents/\\d+",
-				"/account_contents/\\d+",
-				"/account_contents/\\d+/edit",
-				"/contents/\\d+/license_infos",
-				"/api4int/query_password/[^/]+",
-				"/api4int/activate/[^/]+",
-				"/contents_upload_logs/\\d+",
-				"/users/\\d+"
-			],
 			"exclude" : [
 				"/public/.*"
+				"/assets/.*"
 			],
-			"maxGroup" : 1000
+			"maxGroup" : 100
 		},
 		"slowSQL" : {
-			"maxGroup" : 1000
+			"maxGroup" : 100
 		}
 	}
 }

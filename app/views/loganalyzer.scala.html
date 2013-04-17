@@ -1,4 +1,4 @@
-@(name: String, offset: Int, names: scala.collection.Set[String])(implicit lang:Lang)
+@(name: String, passRequired: Boolean, offset: Int, names: scala.collection.Set[String])(implicit lang:Lang)
 
 @main("Papertrail Log Analyzer") {
 <link rel='stylesheet' type='text/css' href='@routes.Assets.at("javascripts/ext/fullcalendar/fullcalendar.css")' />
@@ -147,9 +147,10 @@ fieldset legend {
 var app;
 $(document).ready(function() {
 	$.fn.button.noConflict();
-	var name = "@name"
+	var name = "@name",
+		passRequired = @passRequired;
 		offset = @offset;
-	app = new flect.app.loganalyzer.LogAnalyzer(name, offset);
+	app = new flect.app.loganalyzer.LogAnalyzer(name, passRequired, offset);
 });
 </script>
 <div id="header" class="navbar navbar-inverse">
@@ -178,7 +179,15 @@ $(document).ready(function() {
 				</ul>
 			</div><!--/.nav-collapse -->
 			<div class="pull-right">
-				<button id="download" class="btn btn-info" disabled="disabled">@Messages("download")</button>
+				<div class="btn-group">
+					<a class="btn btn-info dropdown-toggle" data-toggle="dropdown" href="#">@Messages("download")
+						<span class="caret"></span>
+					</a>
+					<ul class="dropdown-menu">
+						<li><a id="downloadSummary" href="#">@Messages("downloadSummary")</a></li>
+						<li><a id="downloadRaw" href="#">@Messages("downloadRaw")</a></li>
+					</ul>
+				</div>
 				<button id="setting" class="btn btn-info">@Messages("setting")</button>
 			</div>
 		</div>
@@ -201,4 +210,9 @@ $(document).ready(function() {
 </div>
 <div id="message"><div>@Messages("analyzing")</div></div>
 <div id="settingDialog" style="display:none"></div>
-}
+<div id="passDialog" style="display:none">
+	<input id="passphrase" type="password">
+</div>}
+<form id="downloadForm" method="POST" action="#">
+	<input id="downloadPassphrase" name="passphrase" type="hidden">
+</form>

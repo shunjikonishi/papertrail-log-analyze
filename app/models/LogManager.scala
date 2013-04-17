@@ -1,6 +1,8 @@
 package models;
 
 import java.io.File;
+import java.io.ByteArrayInputStream;
+import java.util.Date;
 import play.api.Logger;
 import play.api.cache.Cache;
 import play.api.Play.current;
@@ -14,7 +16,6 @@ import play.api.libs.concurrent.Akka;
 //import collection.JavaConversions._;
 import collection.JavaConversions.asScalaBuffer;
 import scala.io.Source;
-import java.io.ByteArrayInputStream;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
@@ -57,16 +58,33 @@ class LogManager(val name: String, bucket: String, directory: String) {
 	
 	private var _setting: Option[AnalyzeSetting] = None;
 	
-	def setting: AnalyzeSetting = {
-		_setting match {
-			case Some(v) => v;
-			case None => setting(initializeSetting);
+	lazy val available = {
+		try {
+			setting;
+			true;
+		} catch {
+			case e: Exception =>
+				false;
 		}
 	}
 	
-	def setting(v: AnalyzeSetting): AnalyzeSetting = {
+	def setting: AnalyzeSetting = {
+		_setting match {
+			case Some(v) => v;
+			case None =>
+				val ret = initializeSetting
+				_setting = Some(ret);
+				ret;
+		}
+	}
+	
+	def updateSetting(v: AnalyzeSetting) = {
+		val client = new AmazonS3Client(new BasicAWSCredentials(ACCESS_KEY, SECRET_KEY));
+		val data = v.toString.getBytes("utf-8");
+		val meta = new ObjectMetadata();
+		meta.setContentLength(data.length);
+		client.putObject(bucket, directory + "/analyze.json", new ByteArrayInputStream(data), meta);
 		_setting = Some(v);
-		v;
 	}
 	
 	private def initializeSetting = {
@@ -77,14 +95,25 @@ class LogManager(val name: String, bucket: String, directory: String) {
 			val lastModified = obj.getObjectMetadata.getLastModified;
 			AnalyzeSetting(source.mkString, lastModified);
 		} catch {
-			case e: AmazonS3Exception if e.getStatusCode == 404 => //Do nothing
+			case e: AmazonS3Exception if e.getStatusCode == 404 =>
+				AnalyzeSetting.defaultSetting;
 			case e: Exception =>
 				e.printStackTrace;
+				throw e;
 		}
-		AnalyzeSetting.defaultSetting;
 	}
 	
-	def status(key: DateKey) = CacheManager(name).get(key).status;
+	def status(key: DateKey) = {
+		val man = CacheManager(name);
+		val summary = man.get(key);
+		if (summary.timestamp.getTime < setting.lastModified.getTime) {
+			man.remove(key);
+			LogStatus.Unprocessed;
+		} else {
+			summary.status;
+		}
+	}
+	
 	def csv(key: DateKey, counterType: Counter.Type)(implicit lang: Lang) = {
 		val summary = CacheManager(name).get(key);
 		summary.status match {
@@ -154,7 +183,7 @@ class LogManager(val name: String, bucket: String, directory: String) {
 		if (list.getObjectSummaries() == null || list.getObjectSummaries().size() == 0) {
 			LogStatus.NotFound;
 		} else {
-			val summary = new Summary(LogStatus.Found, null, null);
+			val summary = new Summary(LogStatus.Found);
 			CacheManager(name).put(key, summary);
 			Akka.future {
 				processCSV(client, list, key);
@@ -188,7 +217,7 @@ class LogManager(val name: String, bucket: String, directory: String) {
 			val man = CacheManager(name)
 			csv.toList match {
 				case a :: b :: Nil => 
-					man.put(key, Summary(LogStatus.Ready, a, b));
+					man.put(key, Summary(LogStatus.Ready, obj.getObjectMetadata.getLastModified, a, b));
 				case _ =>
 					man.put(key, Summary(LogStatus.Error));
 			}
@@ -199,51 +228,6 @@ class LogManager(val name: String, bucket: String, directory: String) {
 	
 	private def prepareCSV(client: AmazonS3Client, key: DateKey) = {
 		val t = System.currentTimeMillis;
-		/*
-		val args = Array(
-			"-al",
-			"-ac",
-			"-sl", "1000",
-			"-sc", "20",
-			//"-rp",
-			"-ce",
-			"-se",
-			"-ds",
-			"-pg",
-			//"-pt",
-			//"-rg",
-			"-he",
-			"-rt",
-				"/e-ink/product/\\d+",
-				"/e-ink/select/author/\\d+",
-				"/e-ink/select/genre/\\d+",
-				"/e-ink/select/genre/\\d+/\\d+",
-				"/mobile/product/\\d+",
-				"/mobile/select/author/\\d+",
-				"/mobile/select/genre/\\d+",
-				"/mobile/select/genre/\\d+/\\d+",
-				"/pc/product/\\d+",
-				"/pc/select/author/\\d+",
-				"/pc/select/genre/\\d+",
-				"/pc/select/genre/\\d+/\\d+",
-				"/ebook/detail/[^/]+",
-				"/accounts/\\d+",
-				"/accounts/\\d+/edit",
-				"/contents/\\d+",
-				"/account_contents/\\d+",
-				"/account_contents/\\d+/edit",
-				"/contents/\\d+/license_infos",
-				"/api4int/query_password/[^/]+",
-				"/api4int/activate/[^/]+",
-				"/contents_upload_logs/\\d+",
-			//"-rn",
-			"-ct",
-			"-ss",
-			"-dt",
-			"-s3", ACCESS_KEY, SECRET_KEY, bucket, directory, key.toDateStr
-		);
-		val analyzer = LogAnalyzer.process(args);
-		*/
 		val analyzer = setting.create;
 		val s3 = new S3Archive(ACCESS_KEY, SECRET_KEY, bucket, directory);
 		val file = File.createTempFile("tmp", ".log");
@@ -257,7 +241,7 @@ class LogManager(val name: String, bucket: String, directory: String) {
 		
 		val countCsv = analyzer.toString(Counter.Type.Count, "\t");
 		val timeCsv = analyzer.toString(Counter.Type.Time, "\t");
-		val summary = Summary(LogStatus.Ready, countCsv, timeCsv);
+		val summary = Summary(LogStatus.Ready, new Date(), countCsv, timeCsv);
 		CacheManager(name).put(key, summary);
 		
 		val data = summary.fullcsv.getBytes("utf-8");
@@ -267,6 +251,13 @@ class LogManager(val name: String, bucket: String, directory: String) {
 			new ByteArrayInputStream(data),
 			meta);
 	}
+	
+	def rawLogFile(key: DateKey) = {
+		val s3 = new S3Archive(ACCESS_KEY, SECRET_KEY, bucket, directory);
+		val file = File.createTempFile("tmp", ".tsv.gz");
+		s3.saveToFile(key.toDateStr, false, file);
+		file;
+	}
 }
 
 object CacheManager {
@@ -275,7 +266,7 @@ object CacheManager {
 	
 	private val CACHE_DURATION = 60 * 60;
 	
-	case class Summary(val status: LogStatus, countCsv: String = null, timeCsv: String = null) {
+	case class Summary(val status: LogStatus, val timestamp: Date = new Date(), countCsv: String = null, timeCsv: String = null) {
 		
 		def csv(counterType: Counter.Type) = counterType match {
 			case Counter.Type.Count => countCsv;

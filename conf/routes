@@ -12,7 +12,10 @@ POST    /:name/status                     controllers.Application.status(name)
 POST    /:name/logcount                   controllers.Application.logcount(name)
 POST    /:name/responsetime               controllers.Application.responsetime(name)
 GET     /:name/show/:date                 controllers.Application.show(name, date)
-GET     /:name/setting                    controllers.Application.setting(name)
+POST    /:name/download/:date             controllers.Application.download(name, date)
+POST    /:name/setting                    controllers.Application.setting(name)
+POST    /:name/updateSetting              controllers.Application.updateSetting(name)
+POST    /:name/passphrase                 controllers.Application.passphrase(name)
 
 
 # Map static resources from the /public folder to the /assets URL path

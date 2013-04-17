@@ -31,6 +31,12 @@ loading[ja]=ロード中・・・
 download=Download
 download[ja]=ダウンロード
 
+downloadSummary=Summary
+downloadSummary[ja]=サマリー
+
+downloadRaw=Raw File
+downloadRaw[ja]=生ログ
+
 ui.name=Name
 ui.name[ja]=名前
 
@@ -79,7 +85,10 @@ ui.ok[ja]=OK
 ui.cancel=Cancel
 ui.cancel[ja]=キャンセル
 
-displaySetting="View"
+ui.inputPassphrase=Input passphrase
+ui.inputPassphrase[ja]=パスフレーズを入力してください
+
+displaySetting=View
 displaySetting[ja]=表示
 
 responseTimeSetting=ResponseTime

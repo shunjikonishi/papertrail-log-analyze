@@ -18,6 +18,7 @@ import play.api.Play.current;
 import play.api.libs.json.Json.toJson;
 
 import java.util.TimeZone;
+import java.util.Date;
 
 import org.apache.commons.codec.binary.Base64;
 
@@ -29,6 +30,7 @@ import models.JqGrid.GridSort;
 import models.LogManager;
 import models.LogManager.LogStatus;
 import models.LogManager.DateKey;
+import models.AnalyzeSetting;
 
 object Application extends Controller {
 	
@@ -36,7 +38,8 @@ object Application extends Controller {
 	sys.env.get("TIMEZONE").foreach { str =>
 		TimeZone.setDefault(TimeZone.getTimeZone(str));
 	};
-	java.util.Locale.setDefault(new java.util.Locale("en", "US"));
+	
+	private val PASSPHRASE = sys.env.get("PASSPHRASE");
 	
 	private val ARCHIVES = sys.env.filterKeys(_.startsWith("PAPERTRAIL_ARCHIVE_"))
 		.map{ case(key, value) =>
@@ -106,7 +109,13 @@ object Application extends Controller {
 	}
 	
 	private def bucketCheck(name: String)(f: LogManager => Result) = {
-		ARCHIVES.get(name).map(f(_)).getOrElse(NotFound);
+		(ARCHIVES.get(name).map{ man =>
+			if (man.available) {
+				f(man);
+			} else {
+				InternalServerError("Maybe PAPERTRAIL_ARCHIVE setting is wrong");
+			}
+		}).getOrElse(NotFound);
 	}
 	
 	private val dateForm = Form(mapping(
@@ -123,9 +132,10 @@ object Application extends Controller {
 	}
 	
 	def loganalyzer(name: String) = filterAction { implicit request =>
+		val passRequired = PASSPHRASE.isDefined;
 		bucketCheck(name) { man =>
 			val offset = TimeZone.getDefault().getRawOffset() / (60 * 60 * 1000);
-			Ok(views.html.loganalyzer(name, offset, ARCHIVES.keySet));
+			Ok(views.html.loganalyzer(name, passRequired, offset, ARCHIVES.keySet));
 		}
 	}
 	
@@ -150,6 +160,18 @@ object Application extends Controller {
 		bucketCheck(name) { man =>
 			val key = DateKey(date);
 			man.fullcsv(key).map(Ok(_)).getOrElse(NotFound);
+		}
+	}
+	
+	def download(name: String, date: String) = filterAction { implicit request =>
+		if (checkPassphrase) {
+			bucketCheck(name) { man =>
+				val key = DateKey(date);
+				val file = man.rawLogFile(key);
+				Ok.sendFile(file, fileName={ f=> key.toDateStr + ".tsv.gz"}, onClose={ () => file.delete()});
+			}
+		} else {
+			Forbidden;
 		}
 	}
 	
@@ -187,8 +209,52 @@ object Application extends Controller {
 	}
 	
 	def setting(name: String) = filterAction { implicit request =>
+		if (checkPassphrase) {
+			bucketCheck(name) { man =>
+				Ok(views.html.setting(man.setting));
+			}
+		} else {
+			Forbidden;
+		}
+	}
+	
+	def passphrase(name: String) = filterAction { implicit request =>
 		bucketCheck(name) { man =>
-			Ok(views.html.setting(man.setting));
+			Ok(if (checkPassphrase) "OK" else "NG");
+		}
+	}
+	
+	def updateSetting(name: String) = filterAction { implicit request =>
+		if (checkPassphrase) {
+			bucketCheck(name) { man =>
+				val json = getPostParam("json").getOrElse("{}");
+				try {
+					val newSetting = AnalyzeSetting(json, new Date());
+					newSetting.validate match {
+						case Some(x) => Ok(x);
+						case None =>
+							man.updateSetting(newSetting);
+							Ok("OK");
+					}
+				} catch {
+					case e: Exception =>
+						e.printStackTrace();
+						Ok(e.toString());
+				}
+			}
+		} else {
+			Forbidden;
+		}
+	}
+	
+	private def checkPassphrase(implicit request: Request[AnyContent]) = {
+		val pass = getPostParam("passphrase").getOrElse("");
+		PASSPHRASE.map(_ == pass).getOrElse(true);
+	}
+	
+	private def getPostParam(name: String)(implicit request: Request[AnyContent]) = {
+		request.body.asFormUrlEncoded.flatMap {
+			_.get(name).map(_.head)
 		}
 	}
 }

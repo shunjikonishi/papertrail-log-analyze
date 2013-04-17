@@ -298,81 +298,111 @@ if (typeof(flect.app.loganalyzer) == "undefined") flect.app.loganalyzer = {};
 		});
 	}
 	function SettingDialog(app, div) {
-		function show() {
-			div.load("/" + app.name + "/setting", function() {
-				$("#settingTabs").tabs();
-				div.dialog({
-					"title" : MSG.setting,
-					"buttons" : [
-						{
-							"text" : MSG.ok,
-							"click" : updateSetting
-						},
-						{
-							"text" : MSG.cancel,
-							"click" : function() { 
-								close();
+		function show(pass) {
+			$.ajax({
+				"url" : "/" + app.name + "/setting", 
+				"type" : "POST",
+				"data" : {
+					"passphrase" : pass
+				},
+				"success" : function(data) {
+					div.empty().append(data);
+					$("#settingTabs").tabs();
+					div.dialog({
+						"title" : MSG.setting,
+						"buttons" : [
+							{
+								"text" : MSG.ok,
+								"click" : function() {
+									updateSetting(pass);
+								}
+							},
+							{
+								"text" : MSG.cancel,
+								"click" : function() { 
+									close();
+								}
 							}
-						}
-					],
-					"width" : "600px",
-					"modal" : true
-				});
+						],
+						"width" : "600px",
+						"modal" : true
+					});
+				},
+				"error" : function() {
+					//ignore
+				}
 			});
 		}
 		function close() {
 			div.dialog("close").dialog("destroy").empty();
 		}
-		function updateSetting() {
+		function buildSetting() {
 			var setting = {
 				"counters" : [],
 				"options" : {
 				}
 			};
 			div.find(":input").each(function() {
-				try {
-					var el = $(this);
-					var name = el.attr("name");
-					var value = el.val();
-					if (name == "counters") {
-						if (el.is(":checked")) {
-							setting.counters.push(value);
+				var el = $(this);
+				var name = el.attr("name");
+				var value = el.val();
+				if (name == "counters") {
+					if (el.is(":checked")) {
+						setting.counters.push(value);
+					}
+				} else {
+					var opName = name.split(".");
+					var counterName = opName[0],
+						propName = opName[1];
+					if (!setting.options[counterName]) {
+						setting.options[counterName] = {};
+					}
+					var op = setting.options[counterName];
+					if (el.is(":checkbox")) {
+						op[propName] = el.is(":checked");
+					} else if (el.is(".number")) {
+						var n = parseInt(value, 10);
+						if (!n) {
+							throw "Invalid number: " + value;
+						}
+						op[propName] = n;
+					} else if (el.is("textarea")) {
+						if (value) {
+							var rows = value.split("\n");
+							for (var i=0; i<rows.length; i++) {
+								//Error check
+//								new RegExp(rows[i]);
+							}
+							op[propName] = rows;
 						}
 					} else {
-						var opName = name.split(".");
-						var counterName = opName[0],
-							propName = opName[1];
-						if (!setting.options[counterName]) {
-							setting.options[counterName] = {};
-						}
-						var op = setting.options[counterName];
-						if (el.is(":checkbox")) {
-							op[propName] = el.is(":checked");
-						} else if (el.is(".number")) {
-							var n = parseInt(value, 10);
-							if (!n) {
-								throw "Invalid number: " + value;
-							}
-							op[propName] = n;
-						} else if (el.is("textarea")) {
-							if (value) {
-								var rows = value.split("\n");
-								for (var i=0; i<rows.length; i++) {
-									//Error check
-									new RegExp(rows[i]);
-								}
-								op[propName] = rows;
-							}
+						throw "Unknown parameter " + name;
+					}
+				}
+			});
+			return setting;
+		}
+		function updateSetting(pass) {
+			try {
+				var json = JSON.stringify(buildSetting());
+				$.ajax({
+					"url" : "/" + app.name + "/updateSetting",
+					"data" : {
+						"json" : json,
+						"passphrase" : pass
+					},
+					"type" : "POST",
+					"success" : function(data) {
+						if (data == "OK") {
+							close();
 						} else {
-							throw "Unknown parameter " + name;
+							alert(data);
 						}
 					}
-				} catch (e) {
-					alert(e);
-				}
-			})
-			console.log(JSON.stringify(setting));
-			close();
+				});
+			} catch (e) {
+				alert(e);
+			}
 		}
 		$.extend(this, {
 			"show" : show
@@ -393,11 +423,22 @@ if (typeof(flect.app.loganalyzer) == "undefined") flect.app.loganalyzer = {};
 	]);
 	
 	//Application
-	flect.app.loganalyzer.LogAnalyzer = function(name, timeOffset) {
-		function download() {
+	flect.app.loganalyzer.LogAnalyzer = function(name, passRequired, timeOffset) {
+		function downloadSummary() {
 			var d = calendar.currentDate();
 			if (d) {
 				window.open("/" + name + "/show/" + calendar.formatDate(d));
+			} else {
+				alert(MSG.notDisplayedLog);
+			}
+		}
+		function downloadRaw(pass) {
+			var d = calendar.currentDate();
+			if (d) {
+				var form = $("#downloadForm");
+				form.attr("action", "/" + name + "/download/" + calendar.formatDate(d));
+				$("#downloadPassphrase").val(pass);
+				form[0].submit();
 			} else {
 				alert(MSG.notDisplayedLog);
 			}
@@ -456,10 +497,48 @@ if (typeof(flect.app.loganalyzer) == "undefined") flect.app.loganalyzer = {};
 			chart.draw(kind, data);
 			$("#chartBtn").show();
 		}
+		function checkPassword(nextFunc) {
+			function doCheck() {
+				$("#passDialog").dialog("close");
+				var value = $("#passphrase").val();
+				$.ajax({
+					"url" : "/" + name + "/passphrase",
+					"type" : "POST",
+					"data" : {
+						"passphrase" : value
+					},
+					"success" : function(data) {
+						if (data == "OK") {
+							nextFunc(value);
+						} else {
+							alert("Invalid passphrase");
+						}
+					}
+				});
+			}
+			$("#passphrase").val("");
+			$("#passDialog").dialog({
+				"title" : MSG.inputPassphrase,
+				"buttons" : [
+					{
+						"text" : MSG.ok,
+						"click" : doCheck
+					},
+					{
+						"text" : MSG.cancel,
+						"click" : function() { 
+							$("#passDialog").dialog("close");
+						}
+					}
+				],
+				"modal" : true
+			});
+		}
 		$.extend(this, {
 			"convertTime" : convertTime,
 			"status" : status,
 			"name" : name,
+			"passphrase" : passphrase,
 			"drawChart" : drawChart
 		});
 		var self = this,
@@ -468,9 +547,21 @@ if (typeof(flect.app.loganalyzer) == "undefined") flect.app.loganalyzer = {};
 			cntGrid = new Grid(this, GridKind.Count, $("#cntGrid")), 
 			timeGrid = new Grid(this, GridKind.Time, $("#timeGrid")),
 			settingDialog = new SettingDialog(this, $("#settingDialog"));
-		$("#download").click(download);
+		$("#downloadSummary").click(downloadSummary);
+		$("#downloadRaw").click(function() {
+			var d = calendar.currentDate();
+			if (!d) {
+				alert(MSG.notDisplayedLog);
+				return;
+			}
+			checkPassword(downloadRaw);
+		});
 		$("#setting").click(function() {
-			settingDialog.show();
+			if (passRequired) {
+				checkPassword(settingDialog.show);
+			} else {
+				settingDialog.show("");
+			}
 		});
 		$("#chartBtn").button().click(function() {
 			chart.changeLine();

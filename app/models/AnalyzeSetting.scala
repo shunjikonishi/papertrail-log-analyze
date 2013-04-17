@@ -11,6 +11,8 @@ import scala.collection.mutable.ListBuffer;
 import scala.io.Source;
 import java.io.File;
 import java.util.Date;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import jp.co.flect.papertrail.LogAnalyzer;
 import jp.co.flect.papertrail.Counter;
 
@@ -81,7 +83,7 @@ object AnalyzeSetting {
 	private def applyTimedGroupOption(counter: TimedGroupCounter, option: JsonWrapper) = {
 		option.getAsStringArray("pattern").foreach{ str =>
 			str.split(",").toList match {
-				case x :: xs => counter.addPattern(x, xs.mkString(","));
+				case x :: xs :: Nil => counter.addPattern(x, xs);
 				case _ => counter.addPattern(str, str);
 			}
 		};
@@ -179,4 +181,49 @@ class AnalyzeSetting(setting: JsValue, val lastModified: Date) {
 		}
 	}
 	
+	def validate = {
+		val errors = new ListBuffer[String]();
+		def checkPattern(strs: JsValue) = {
+			strs match {
+				case JsArray(array) =>
+					array.foldLeft(errors) { (list, v) =>
+						try {
+							Pattern.compile(v.as[String]);
+						} catch {
+							case ex: PatternSyntaxException =>
+								list += ex.getMessage();
+							case ex: Exception =>
+								ex.printStackTrace();
+								list += ex.toString
+						}
+						list;
+					}
+				case _ =>
+			}
+		}
+		(setting \ "counters") match {
+			case JsArray(array) =>
+				if (array.size == 0) {
+					errors += "Counter not found";
+				} else {
+					array.foldLeft(errors) { (list, v) =>
+						val name = v.as[String];
+						if (counterMap.get(name).isEmpty) {
+							list += "Unknown counter: " + name;
+						}
+						list;
+					}
+				}
+			case _ => errors += "Counter not found";
+		}
+		checkPattern(setting \ "options" \ "responseTime" \ "pattern");
+		checkPattern(setting \ "options" \ "responseTime" \ "exclude");
+		checkPattern(setting \ "options" \ "slowSQL" \ "pattern");
+		checkPattern(setting \ "options" \ "slowSQL" \ "exclude");
+		
+		if (errors.size == 0) None;
+		else Some(errors.mkString("\n"));
+	}
+	
+	override def toString = setting.toString;
 }
