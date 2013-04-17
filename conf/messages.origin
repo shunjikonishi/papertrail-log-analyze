@@ -154,8 +154,11 @@ counter.herokuError[ja]=Herokuエラー別
 counter.responseTime=Response Time
 counter.responseTime[ja]=レスポンスタイム
 
-counter.regexGroup=Regex Group
-counter.regexGroup[ja]=正規表現グループ
+counter.regexCount=Regex Count
+counter.regexCount[ja]=正規表現カウント
+
+counter.regexNumber=Regex Number
+counter.regexNumber[ja]=正規表現数値
 
 counter.pattern=Pattern
 counter.pattern[ja]=パターン

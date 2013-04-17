@@ -42,11 +42,13 @@ object AnalyzeSetting {
 			new DynoStateChangedCounter("counter.dynoStateChanged") :: Nil;
 		}, "program" -> { option =>
 			new ProgramCounter("counter.program") :: Nil;
-		/*
 		}, "regexCount" -> { option =>
-			option.map
-			new ProgramCounter("counter.program") :: Nil;
-		*/
+			(option.getAsStringArray("pattern").foldLeft(List[Counter]()) { (list, str) =>
+				str.split(",").toList match {
+					case x :: xs :: Nil => new RegexGroupCounter(x, xs) :: list;
+					case _ => new RegexGroupCounter(str, str) :: list
+				}
+			}).reverse;
 		//ResponseTime
 		}, "responseTime" -> { option =>
 			val ret = new ResponseTimeCounter("counter.responseTime", "counter.allAccess", "counter.other");
@@ -72,11 +74,13 @@ object AnalyzeSetting {
 			ret :: Nil;
 		}, "dynoBoot" -> { option =>
 			new DynoBootTimeCounter("counter.dynoBoot") :: Nil;
-		/*
 		}, "regexNumber" -> { option =>
-			option.map
-			new ProgramCounter("counter.program") :: Nil;
-		*/
+			(option.getAsStringArray("pattern").foldLeft(List[Counter]()) { (list, str) =>
+				str.split(",").toList match {
+					case x :: xs :: Nil => new RegexNumberCounter(x, xs) :: list;
+					case _ => new RegexNumberCounter(str, str) :: list
+				}
+			}).reverse;
 		}
 	);
 	
@@ -220,6 +224,8 @@ class AnalyzeSetting(setting: JsValue, val lastModified: Date) {
 		checkPattern(setting \ "options" \ "responseTime" \ "exclude");
 		checkPattern(setting \ "options" \ "slowSQL" \ "pattern");
 		checkPattern(setting \ "options" \ "slowSQL" \ "exclude");
+		checkPattern(setting \ "options" \ "regexCount" \ "pattern");
+		checkPattern(setting \ "options" \ "regexNumber" \ "pattern");
 		
 		if (errors.size == 0) None;
 		else Some(errors.mkString("\n"));

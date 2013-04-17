@@ -27,7 +27,7 @@
 				<li><input name="counters" type="checkbox" value="herokuError" @setting.checked("herokuError")><label>@Messages("counter.herokuError")</label></li>
 				<li><input name="counters" type="checkbox" value="dynoStateChanged" @setting.checked("dynoStateChanged")><label>@Messages("counter.dynoStateChanged")</label></li>
 				<li><input name="counters" type="checkbox" value="program" @setting.checked("program")><label>@Messages("counter.program")</label></li>
-				<li><input name="counters" type="checkbox" value="regexCount" @setting.checked("regexCount")><label>@Messages("counter.regexGroup")</label></li>
+				<li><input name="counters" type="checkbox" value="regexCount" @setting.checked("regexCount")><label>@Messages("counter.regexCount")</label></li>
 			</ol>
 		</fieldset>
 		<fieldset>
@@ -41,7 +41,7 @@
 					<input name="slowSQL.threshold" class="number" maxlength="4" value="@setting.option("slowSQL.threshold", "50")"> ms
 				</li>
 				<li><input name="counters" type="checkbox" value="dynoBoot" @setting.checked("dynoBoot")><label>@Messages("counter.dynoBoot")</label></li>
-				<li><input name="counters" type="checkbox" value="regexNumber" @setting.checked("regexNumber")><label>@Messages("counter.regexGroup")</label></li>
+				<li><input name="counters" type="checkbox" value="regexNumber" @setting.checked("regexNumber")><label>@Messages("counter.regexNumber")</label></li>
 			</ol>
 		</fieldset>
 	</div>
@@ -90,6 +90,14 @@
 		</div>
 	</div>
 	<div id="regexSetting" class="setting">
-		Not implemented
+		<div>
+			<label>@Messages("counter.regexCount")</label><br>
+			<textarea name="regexCount.pattern" rows="5">@setting.option("regexCount.pattern", "")</textarea>
+		</div>
+		<hr>
+		<div>
+			<label>@Messages("counter.regexNumber")</label><br>
+			<textarea name="regexNumber.pattern" rows="5">@setting.option("regexNumber.pattern", "")</textarea>
+		</div>
 	</div>
 </div>

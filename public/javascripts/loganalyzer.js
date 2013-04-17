@@ -371,7 +371,7 @@ if (typeof(flect.app.loganalyzer) == "undefined") flect.app.loganalyzer = {};
 							var rows = value.split("\n");
 							for (var i=0; i<rows.length; i++) {
 								//Error check
-//								new RegExp(rows[i]);
+								new RegExp(rows[i]);
 							}
 							op[propName] = rows;
 						}
@@ -491,7 +491,6 @@ if (typeof(flect.app.loganalyzer) == "undefined") flect.app.loganalyzer = {};
 			cntGrid.reload(str);
 			timeGrid.reload(str);
 			calendar.currentDate(date);
-			$("#download").removeAttr("disabled");
 		}
 		function drawChart(kind, data) {
 			chart.draw(kind, data);
@@ -554,7 +553,11 @@ if (typeof(flect.app.loganalyzer) == "undefined") flect.app.loganalyzer = {};
 				alert(MSG.notDisplayedLog);
 				return;
 			}
-			checkPassword(downloadRaw);
+			if (passRequired) {
+				checkPassword(downloadRaw);
+			} else {
+				downloadRaw("");
+			}
 		});
 		$("#setting").click(function() {
 			if (passRequired) {
