@@ -64,6 +64,7 @@ class LogManager(val name: String, bucket: String, directory: String) {
 			true;
 		} catch {
 			case e: Exception =>
+				e.printStackTrace;
 				false;
 		}
 	}
@@ -98,7 +99,6 @@ class LogManager(val name: String, bucket: String, directory: String) {
 			case e: AmazonS3Exception if e.getStatusCode == 404 =>
 				AnalyzeSetting.defaultSetting;
 			case e: Exception =>
-				e.printStackTrace;
 				throw e;
 		}
 	}

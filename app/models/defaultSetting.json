@@ -23,7 +23,7 @@
 		},
 		"responseTime" : {
 			"exclude" : [
-				"/public/.*"
+				"/public/.*",
 				"/assets/.*"
 			],
 			"maxGroup" : 100
