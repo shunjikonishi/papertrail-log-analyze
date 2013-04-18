@@ -44,7 +44,7 @@ object AnalyzeSetting {
 			new ProgramCounter("counter.program") :: Nil;
 		}, "regexCount" -> { option =>
 			(option.getAsStringArray("pattern").foldLeft(List[Counter]()) { (list, str) =>
-				str.split(",").toList match {
+				str.split("=").toList match {
 					case x :: xs :: Nil => new RegexGroupCounter(x, xs) :: list;
 					case _ => new RegexGroupCounter(str, str) :: list
 				}
@@ -76,7 +76,7 @@ object AnalyzeSetting {
 			new DynoBootTimeCounter("counter.dynoBoot") :: Nil;
 		}, "regexNumber" -> { option =>
 			(option.getAsStringArray("pattern").foldLeft(List[Counter]()) { (list, str) =>
-				str.split(",").toList match {
+				str.split("=").toList match {
 					case x :: xs :: Nil => new RegexNumberCounter(x, xs) :: list;
 					case _ => new RegexNumberCounter(str, str) :: list
 				}
@@ -86,7 +86,7 @@ object AnalyzeSetting {
 	
 	private def applyTimedGroupOption(counter: TimedGroupCounter, option: JsonWrapper) = {
 		option.getAsStringArray("pattern").foreach{ str =>
-			str.split(",").toList match {
+			str.split("=").toList match {
 				case x :: xs :: Nil => counter.addPattern(x, xs);
 				case _ => counter.addPattern(str, str);
 			}
