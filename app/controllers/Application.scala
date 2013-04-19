@@ -257,4 +257,21 @@ object Application extends Controller {
 			_.get(name).map(_.head)
 		}
 	}
+	
+	def test() = Action {
+		import java.io.File;
+		import play.api.libs.iteratee.Enumerator;
+		import play.api.mvc.SimpleResult;
+		import play.api.mvc.ResponseHeader;
+		val file = new File("c:/FLECT/work/filetest/test.zip");
+		var is = new java.io.FileInputStream(file) {
+			override def close() = { super.close(); println("close");}
+		}
+		val fileContent: Enumerator[Array[Byte]] = Enumerator.fromStream(is)
+		val size = file.length.toString
+		println("delete " + file.delete) // (1) THE FILE IS TEMPORARY SO SHOULD BE DELETED 
+		SimpleResult(
+			 header = ResponseHeader(200, Map(CONTENT_LENGTH -> size, CONTENT_TYPE -> "application/octet-stream")),
+			 body = fileContent)
+	}
 }

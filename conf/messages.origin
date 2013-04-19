@@ -1,6 +1,9 @@
 viewSource=View source
 viewSource[ja]=ソースを見る
 
+appDescription=Analyzing the heroku logs archived by Papertrail
+appDescription[ja]=Papertrailのアーカイブしたログを解析するツールです。
+
 view=View
 view[ja]=表示
 
@@ -67,10 +70,10 @@ ui.TimeMS[ja]=平均
 ui.total=Total
 ui.total[ja]=総計
 
-ui.notDisplayedLog=Log is not displayed
+ui.notDisplayedLog=Log not displayed
 ui.notDisplayedLog[ja]=ログが表示されていません
 
-ui.notFoundLog=Not found log
+ui.notFoundLog=Log not found
 ui.notFoundLog[ja]=ログが見つかりません
 
 ui.s3error=S3 access error
@@ -87,6 +90,9 @@ ui.cancel[ja]=キャンセル
 
 ui.inputPassphrase=Input passphrase
 ui.inputPassphrase[ja]=パスフレーズを入力してください
+
+ui.invalidPassphrase=Invalid passphrase
+ui.invalidPassphrase[ja]=パスフレーズが不正です
 
 displaySetting=View
 displaySetting[ja]=表示

@@ -3,6 +3,7 @@ if (typeof(flect.app) == "undefined") flect.app = {};
 if (typeof(flect.app.loganalyzer) == "undefined") flect.app.loganalyzer = {};
 
 (function ($) {
+	var MSG = flect.app.loganalyzer.MSG;
 	//Classes
 	function Enum(values) {
 		for (var i=0; i<values.length; i++) {
@@ -408,6 +409,58 @@ if (typeof(flect.app.loganalyzer) == "undefined") flect.app.loganalyzer = {};
 			"show" : show
 		});
 	}
+	function PassphraseDialog(app, div) {
+		var passInput = div.find(":password");
+		
+		function doCheck(nextFunc) {
+			div.dialog("close");
+			var value = passInput.val();
+			$.ajax({
+				"url" : "/" + app.name + "/passphrase",
+				"type" : "POST",
+				"data" : {
+					"passphrase" : value
+				},
+				"success" : function(data) {
+					if (data == "OK") {
+						nextFunc(value);
+					} else {
+						alert(MSG.invalidPassphrase);
+					}
+				}
+			});
+		}
+		function show(nextFunc) {
+			passInput.val("");
+			div.dialog({
+				"title" : MSG.inputPassphrase,
+				"buttons" : [
+					{
+						"text" : MSG.ok,
+						"click" : function() {
+							doCheck(nextFunc);
+						}
+					},
+					{
+						"text" : MSG.cancel,
+						"click" : function() { 
+							div.dialog("close");
+						}
+					}
+				],
+				"modal" : true
+			});
+		}
+		$.extend(this, {
+			"show" : show
+		});
+	}
+	function LoadingMessage(app, div) {
+		$.extend(this, {
+			"show" : function() { div.show();},
+			"hide" : function() { div.hide();}
+		});
+	}
 	//Enums
 	var CacheStatus = new Enum([
 		{ "name" : "Unprocessed"},
@@ -463,20 +516,20 @@ if (typeof(flect.app.loganalyzer) == "undefined") flect.app.loganalyzer = {};
 					var cs = CacheStatus.fromName(data);
 					switch (cs) {
 						case CacheStatus.Ready:
-							$("#message").hide();
+							loadingMessage.hide();
 							loadData(date);
 							break;
 						case CacheStatus.NotFound:
 							alert(MSG.notFoundLog);
 							break;
 						case CacheStatus.Found:
-							$("#message").show();
+							loadingMessage.show();
 							setTimeout(function() {
 								status(date)
 							}, 1000);
 							break;
 						case CacheStatus.Error:
-							$("#message").hide();
+							loadingMessage.hide();
 							alert(MSG.s3error);
 							break;
 						default:
@@ -494,81 +547,46 @@ if (typeof(flect.app.loganalyzer) == "undefined") flect.app.loganalyzer = {};
 		}
 		function drawChart(kind, data) {
 			chart.draw(kind, data);
-			$("#chartBtn").show();
-		}
-		function checkPassword(nextFunc) {
-			function doCheck() {
-				$("#passDialog").dialog("close");
-				var value = $("#passphrase").val();
-				$.ajax({
-					"url" : "/" + name + "/passphrase",
-					"type" : "POST",
-					"data" : {
-						"passphrase" : value
-					},
-					"success" : function(data) {
-						if (data == "OK") {
-							nextFunc(value);
-						} else {
-							alert("Invalid passphrase");
-						}
-					}
-				});
-			}
-			$("#passphrase").val("");
-			$("#passDialog").dialog({
-				"title" : MSG.inputPassphrase,
-				"buttons" : [
-					{
-						"text" : MSG.ok,
-						"click" : doCheck
-					},
-					{
-						"text" : MSG.cancel,
-						"click" : function() { 
-							$("#passDialog").dialog("close");
-						}
-					}
-				],
-				"modal" : true
-			});
+			chartBtn.show();
 		}
 		$.extend(this, {
 			"convertTime" : convertTime,
 			"status" : status,
 			"name" : name,
-			"passphrase" : passphrase,
 			"drawChart" : drawChart
 		});
 		var self = this,
+			loadingMessage = new LoadingMessage(this, $("#message")),
 			calendar = new Calendar(this, $('#calendar')),
-			chart = new Chart(this, "mainChart");
+			chart = new Chart(this, "mainChart"),
 			cntGrid = new Grid(this, GridKind.Count, $("#cntGrid")), 
 			timeGrid = new Grid(this, GridKind.Time, $("#timeGrid")),
-			settingDialog = new SettingDialog(this, $("#settingDialog"));
-		$("#downloadSummary").click(downloadSummary);
-		$("#downloadRaw").click(function() {
-			var d = calendar.currentDate();
-			if (!d) {
-				alert(MSG.notDisplayedLog);
-				return;
-			}
-			if (passRequired) {
-				checkPassword(downloadRaw);
-			} else {
-				downloadRaw("");
-			}
-		});
-		$("#setting").click(function() {
-			if (passRequired) {
-				checkPassword(settingDialog.show);
-			} else {
-				settingDialog.show("");
-			}
-		});
-		$("#chartBtn").button().click(function() {
-			chart.changeLine();
-		});
-		
+			settingDialog = new SettingDialog(this, $("#settingDialog")),
+			passDialog = new PassphraseDialog(this, $("#passDialog")),
+			
+			//Buttons
+			dlSummaryBtn = $("#downloadSummary").click(downloadSummary),
+			dlRawBtn = $("#downloadRaw").click(function() {
+				var d = calendar.currentDate();
+				if (!d) {
+					alert(MSG.notDisplayedLog);
+					return;
+				}
+				if (passRequired) {
+					passDialog.show(downloadRaw);
+				} else {
+					downloadRaw("");
+				}
+			}),
+			settingBtn = $("#setting").click(function() {
+				if (passRequired) {
+					passDialog.show(settingDialog.show);
+				} else {
+					settingDialog.show("");
+				}
+			}),
+			chartBtn = $("#chartBtn").button().click(function() {
+				chart.changeLine();
+			});
 	}
 })(jQuery);

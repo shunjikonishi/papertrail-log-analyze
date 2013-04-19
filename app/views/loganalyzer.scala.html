@@ -138,7 +138,7 @@ fieldset legend {
 </style>
 <script type='text/javascript' src='/i18n/@lang.language/messages.js'></script>
 <script type='text/javascript' src='@routes.Assets.at("javascripts/ext/fullcalendar/fullcalendar.js")'></script>
-<script type='text/javascript' src='@routes.Assets.at("javascripts/ext/jqgrid/js/i18n/grid.locale-en.js")'></script>
+<script type='text/javascript' src='@routes.Assets.at("javascripts/ext/jqgrid/js/i18n/grid.locale-" + lang.language + ".js")'></script>
 <script type='text/javascript' src='@routes.Assets.at("javascripts/ext/jqgrid/js/jquery.jqGrid.src.js")'></script>
 <script type='text/javascript' src='@routes.Assets.at("javascripts/ext/flotr2/flotr2.js")'></script>
 <script type='text/javascript' src='@routes.Assets.at("javascripts/loganalyzer.js")'></script>
@@ -211,7 +211,7 @@ $(document).ready(function() {
 <div id="message"><div>@Messages("analyzing")</div></div>
 <div id="settingDialog" style="display:none"></div>
 <div id="passDialog" style="display:none">
-	<input id="passphrase" type="password">
+	<input type="password">
 </div>}
 <form id="downloadForm" method="POST" action="#">
 	<input id="downloadPassphrase" name="passphrase" type="hidden">
