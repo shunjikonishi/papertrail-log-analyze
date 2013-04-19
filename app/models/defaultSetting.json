@@ -7,12 +7,14 @@
 		"serverError",
 		"clientError",
 		"dynoStateChanged",
+		"regexCount",
 		"program",
 		"herokuError",
 		"responseTime",
 		"connectTime",
 		"slowSQL",
-		"dynoBoot"
+		"dynoBoot",
+		"regexNumber"
 	],
 	"options" : {
 		"slowRequest" : {
