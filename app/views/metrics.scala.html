@@ -40,7 +40,9 @@ $(function() {
 						<ul class="dropdown-menu">
 							<li><a href="/">@Messages("home")</a></li>
 							<li class="divider"></li>
-							<li><a href="/app/@name">@name</a></li>
+							@names.map{ name =>
+								<li><a href="/app/@name">@name</a></li>
+							}
 						</ul>
 					</li>
 					<li class="dropdown">
