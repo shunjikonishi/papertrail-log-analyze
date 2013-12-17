@@ -7,15 +7,16 @@ GET     /                                 controllers.Application.index
 GET     /i18n/setlang                     controllers.I18N.setLang(lang)
 GET     /i18n/:lang/messages.js           controllers.I18N.messages(lang)
 
-GET     /:name                            controllers.Application.loganalyzer(name)
-POST    /:name/status                     controllers.Application.status(name)
-POST    /:name/logcount                   controllers.Application.logcount(name)
-POST    /:name/responsetime               controllers.Application.responsetime(name)
-GET     /:name/show/:date                 controllers.Application.show(name, date)
-POST    /:name/download/:date             controllers.Application.download(name, date)
-POST    /:name/setting                    controllers.Application.setting(name)
-POST    /:name/updateSetting              controllers.Application.updateSetting(name)
-POST    /:name/passphrase                 controllers.Application.passphrase(name)
+GET     /app/:name                        controllers.Application.loganalyzer(name)
+POST    /app/:name/status                 controllers.Application.status(name)
+POST    /app/:name/logcount               controllers.Application.logcount(name)
+POST    /app/:name/responsetime           controllers.Application.responsetime(name)
+GET     /app/:name/show/:date             controllers.Application.show(name, date)
+POST    /app/:name/download/:date         controllers.Application.download(name, date)
+POST    /app/:name/setting                controllers.Application.setting(name)
+POST    /app/:name/updateSetting          controllers.Application.updateSetting(name)
+POST    /app/:name/passphrase             controllers.Application.passphrase(name)
+GET     /app/:name/metrics/:date          controllers.Application.metrics(name, date)
 
 
 # Map static resources from the /public folder to the /assets URL path

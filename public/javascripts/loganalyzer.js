@@ -196,7 +196,7 @@ if (typeof(flect.app.loganalyzer) == "undefined") flect.app.loganalyzer = {};
 		}
 		var grid = table.jqGrid({
 			"autowidth" : true,
-			"url" : "/" + app.name + kind.path,
+			"url" : "/app/" + app.name + kind.path,
 			"datatype" : "json",
 			"mtype" : "POST",
 			"colNames" : labels,
@@ -301,7 +301,7 @@ if (typeof(flect.app.loganalyzer) == "undefined") flect.app.loganalyzer = {};
 	function SettingDialog(app, div) {
 		function show(pass) {
 			$.ajax({
-				"url" : "/" + app.name + "/setting", 
+				"url" : "/app/" + app.name + "/setting", 
 				"type" : "POST",
 				"data" : {
 					"passphrase" : pass
@@ -340,7 +340,10 @@ if (typeof(flect.app.loganalyzer) == "undefined") flect.app.loganalyzer = {};
 		function buildSetting() {
 			var setting = {
 				"counters" : [],
-				"options" : {
+				"options" : {},
+				"metrics" : {
+					"enabled" : false,
+					"keys" : "memory_rss,memory_total"
 				}
 			};
 			div.find(":input").each(function() {
@@ -351,6 +354,10 @@ if (typeof(flect.app.loganalyzer) == "undefined") flect.app.loganalyzer = {};
 					if (el.is(":checked")) {
 						setting.counters.push(value);
 					}
+				} else if (name == "metrics.enabled") {
+					setting.metrics.enabled = el.is(":checked");
+				} else if (name == "metrics.keys") {
+					setting.metrics.keys = el.val();
 				} else {
 					var opName = name.split(".");
 					var counterName = opName[0],
@@ -387,7 +394,7 @@ if (typeof(flect.app.loganalyzer) == "undefined") flect.app.loganalyzer = {};
 			try {
 				var json = JSON.stringify(buildSetting());
 				$.ajax({
-					"url" : "/" + app.name + "/updateSetting",
+					"url" : "/app/" + app.name + "/updateSetting",
 					"data" : {
 						"json" : json,
 						"passphrase" : pass
@@ -416,7 +423,7 @@ if (typeof(flect.app.loganalyzer) == "undefined") flect.app.loganalyzer = {};
 			div.dialog("close");
 			var value = passInput.val();
 			$.ajax({
-				"url" : "/" + app.name + "/passphrase",
+				"url" : "/app/" + app.name + "/passphrase",
 				"type" : "POST",
 				"data" : {
 					"passphrase" : value
@@ -480,7 +487,7 @@ if (typeof(flect.app.loganalyzer) == "undefined") flect.app.loganalyzer = {};
 		function downloadSummary() {
 			var d = calendar.currentDate();
 			if (d) {
-				window.open("/" + name + "/show/" + calendar.formatDate(d));
+				window.open("/app/" + name + "/show/" + calendar.formatDate(d));
 			} else {
 				alert(MSG.notDisplayedLog);
 			}
@@ -489,7 +496,7 @@ if (typeof(flect.app.loganalyzer) == "undefined") flect.app.loganalyzer = {};
 			var d = calendar.currentDate();
 			if (d) {
 				var form = $("#downloadForm");
-				form.attr("action", "/" + name + "/download/" + calendar.formatDate(d));
+				form.attr("action", "/app/" + name + "/download/" + calendar.formatDate(d));
 				$("#downloadPassphrase").val(pass);
 				form[0].submit();
 			} else {
@@ -507,7 +514,7 @@ if (typeof(flect.app.loganalyzer) == "undefined") flect.app.loganalyzer = {};
 		}
 		function status(date) {
 			$.ajax({
-				"url" : "/" + name + "/status",
+				"url" : "/app/" + name + "/status",
 				"data" : {
 					"date" : calendar.formatDate(date)
 				},
@@ -587,6 +594,16 @@ if (typeof(flect.app.loganalyzer) == "undefined") flect.app.loganalyzer = {};
 			}),
 			chartBtn = $("#chartBtn").button().click(function() {
 				chart.changeLine();
+			}),
+			metricsBtn = $("#metrics").button().click(function() {
+				var d = calendar.currentDate();
+				if (!d) {
+					alert(MSG.notDisplayedLog);
+					return;
+				}
+				var keys = $(this).attr("data"),
+					href = "/app/" + name + "/metrics/" + calendar.formatDate(d) + "?key=" + keys;
+				location.href = href;
 			});
 	}
 })(jQuery);

@@ -13,6 +13,7 @@ object Global extends GlobalSettings {
 			val gen = new ResourceGen(defaults.getParentFile(), "messages");
 			gen.process(origin);
 		}
+		new File("filecache").mkdir();
 	}
 	
 }

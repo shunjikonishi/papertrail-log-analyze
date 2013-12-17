@@ -185,6 +185,9 @@ class AnalyzeSetting(setting: JsValue, val lastModified: Date) {
 		}
 	}
 	
+	def metricsEnabled = new JsonWrapper(setting \ "metrics").getAsBoolean("enabled", false)
+	def metricsKeys = new JsonWrapper(setting \ "metrics").getAsString("keys", "memory_rss,memory_total")
+	
 	def validate = {
 		val errors = new ListBuffer[String]();
 		def checkPattern(strs: JsValue) = {

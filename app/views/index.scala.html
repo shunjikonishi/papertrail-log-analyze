@@ -24,7 +24,7 @@ footer .copy-right {
 						<a href="#" class="dropdown-toggle" data-toggle="dropdown">@Messages("view")<b class="caret"></b></a>
 						<ul class="dropdown-menu">
 							@names.map{ name =>
-								<li><a href="/@name">@name</a></li>
+								<li><a href="/app/@name">@name</a></li>
 							}
 						</ul>
 					</li>
@@ -54,7 +54,7 @@ footer .copy-right {
 	<div class="row">
 		<div class="span6">
 			@names.map{ name =>
-				<h2><a href="/@name">@name</a></h2>
+				<h2><a href="/app/@name">@name</a></h2>
 			}
 		</div>
 	</div>

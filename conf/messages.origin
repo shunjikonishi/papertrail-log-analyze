@@ -183,3 +183,25 @@ counter.allSQL[ja]=すべての遅延SQL
 
 counter.other=Other
 counter.other[ja]=その他
+
+show=Show
+show[ja]=再表示
+
+keywords=Keywords
+keywords[ja]=キーワード
+
+dynos=Dynos
+dynos=Dyno
+
+displayChart=Display chart
+displayChart=チャート表示
+
+zoomInformation=Select an area of the graph to zoom. Click to reset the chart.
+zoomInformation[ja]=グラフの一部を選択するとそのエリアが拡大表示されます。(クリックで解除)
+
+metricsSetting=log-metrics
+metricsSetting[ja]=log-metrics
+
+enableMetrics=Enable metrics chart
+enableMetrics[ja]=チャートを有効にする
+

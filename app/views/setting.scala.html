@@ -5,6 +5,7 @@
 		<li><a href="#responseTimeSetting">@Messages("responseTimeSetting")</a></li>
 		<li><a href="#slowSqlSetting">@Messages("slowSqlSetting")</a></li>
 		<li><a href="#regexSetting">@Messages("regexSetting")</a></li>
+		<li><a href="#metricsSetting">@Messages("metricsSetting")</a></li>
 	</ul>
 	<div id="displaySetting" class="setting">
 		<fieldset>
@@ -98,6 +99,16 @@
 		<div>
 			<label>@Messages("counter.regexNumber")</label><br>
 			<textarea name="regexNumber.pattern" rows="5">@setting.option("regexNumber.pattern", "")</textarea>
+		</div>
+	</div>
+	<div id="metricsSetting" class="setting">
+		<div>
+			<input type="checkbox" name="metrics.enabled" value="true" @if(setting.metricsEnabled){checked}>
+			<label>@Messages("enableMetrics")</label>
+		</div>
+		<div>
+			<label>@Messages("keywords") </label>
+			<input name="metrics.keys" class="input-xlarge" value="@setting.metricsKeys">
 		</div>
 	</div>
 </div>

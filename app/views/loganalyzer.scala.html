@@ -1,4 +1,4 @@
-@(name: String, passRequired: Boolean, offset: Int, names: scala.collection.Set[String])(implicit lang:Lang)
+@(name: String, passRequired: Boolean, offset: Int, metricsKeys: Option[String], names: scala.collection.Set[String])(implicit lang:Lang)
 
 @main("Papertrail Log Analyzer") {
 <link rel='stylesheet' type='text/css' href='@routes.Assets.at("javascripts/ext/fullcalendar/fullcalendar.css")' />
@@ -165,7 +165,7 @@ $(document).ready(function() {
 							<li><a href="/">@Messages("home")</a></li>
 							<li class="divider"></li>
 							@names.filter(_ != name).map{ name =>
-								<li><a href="/@name">@name</a></li>
+								<li><a href="/app/@name">@name</a></li>
 							}
 						</ul>
 					</li>
@@ -208,6 +208,12 @@ $(document).ready(function() {
 		<table id="timeGrid"></table>
 	</div>
 </div>
+@metricsKeys.map{ keys =>
+	<div>
+		<h3>Log metrics</h3>
+		<button id="metrics" class="btn btn-info" data="@keys">@Messages("view")</button>
+	</div>
+}
 <div id="message"><div>@Messages("analyzing")</div></div>
 <div id="settingDialog" style="display:none"></div>
 <div id="passDialog" style="display:none">
