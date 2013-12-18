@@ -23,8 +23,10 @@ import java.util.Date;
 import org.apache.commons.codec.binary.Base64;
 
 import jp.co.flect.papertrail.Counter;
-import jp.co.flect.papertrail.metrics.MultiLogMetrics;
+import jp.co.flect.papertrail.metrics.LogMetricsCollector;
 import jp.co.flect.net.IPFilter;
+import jp.co.flect.heroku.platformapi.PlatformApi;
+import jp.co.flect.heroku.platformapi.model.Scope;
 
 import models.JqGrid;
 import models.JqGrid.GridSort;
@@ -44,7 +46,7 @@ object Application extends Controller {
   
   private val PASSPHRASE = sys.env.get("PASSPHRASE");
   
-  private val ARCHIVES = sys.env.filterKeys(_.startsWith("PAPERTRAIL_ARCHIVE_"))
+  val ARCHIVES = sys.env.filterKeys(_.startsWith("PAPERTRAIL_ARCHIVE_"))
     .map{ case(key, value) =>
       val newKey = key.substring("PAPERTRAIL_ARCHIVE_".length).toLowerCase;
       val (bucket, dir) = value.span(_ != '/');
@@ -131,7 +133,8 @@ object Application extends Controller {
   )(GridSort.apply)(GridSort.unapply));
   
   def index = filterAction { implicit request =>
-    Ok(views.html.index(ARCHIVES.keySet));
+    val herokuUrl = sys.env.get("HEROKU_OAUTH_ID").map(PlatformApi.getOAuthUrl(_, Scope.Read))
+    Ok(views.html.index(ARCHIVES.keySet, herokuUrl));
   }
   
   def loganalyzer(name: String) = filterAction { implicit request =>
@@ -270,10 +273,10 @@ object Application extends Controller {
         val key = request.getQueryString("key").getOrElse("memory_rss,memory_total")
         val keys = key.split(",").map(_.trim)
         
-        val m = new MultiLogMetrics()
+        val m = new LogMetricsCollector()
         keys.foreach(m.addTarget(_))
         m.process(file);
-        val map = m.getResultMetrics().mapValues[JsValue](s => JsString(s.toString))  + ("keys" -> JsArray(keys.map(JsString(_))))
+        val map = m.getResult().mapValues[JsValue](s => JsString(s.toString))  + ("keys" -> JsArray(keys.map(JsString(_))))
         Ok(views.html.metrics(ARCHIVES.keySet, name, key, Json.stringify(JsObject(map.toSeq)), date))
       } catch {
         case e: Exception =>

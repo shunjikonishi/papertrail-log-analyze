@@ -1,0 +1,29 @@
+@(name: String)(implicit lang:Lang)
+
+@main("Papertrail Log Metrics") {
+<script>
+$(function() {
+	var MAX_ROWS = 20,
+		name = "@name",
+		cnt = 0,
+		$message = $("#messages"),
+		$count = $("#count"),
+		ws = new WebSocket("ws://localhost:9000/rm/ws/" + name);
+	
+	ws.onmessage = function(evt) {
+		cnt++;
+		$count.text(cnt);
+		if (cnt > MAX_ROWS) {
+			$message.find("p:first").remove();
+		}
+		$message.append("<p>" + evt.data + "</p>");
+	};
+	ws.onopen = function(evt) {
+		ws.send("test");
+	}
+})
+</script>
+<h1>@name</h1>
+<h2>Lines: <span id="count"></span></h2>
+<div id="messages"></div>
+}

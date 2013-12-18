@@ -1,4 +1,4 @@
-@(names: scala.collection.Set[String])(implicit lang:Lang)
+@(names: scala.collection.Set[String], herokuUrl: Option[String])(implicit lang:Lang)
 
 @main("Papertrail Log Analyzer") {
 <style type="text/css">
@@ -57,6 +57,12 @@ footer .copy-right {
 				<h2><a href="/app/@name">@name</a></h2>
 			}
 		</div>
+		@herokuUrl.map { url =>
+		<div class="span6">
+			<h2>Realtime log metrics</h2>
+			<a href="@url" class="btn btn-info">Login with heroku account</a>
+		</div>
+		}
 	</div>
 </div> <!-- /container -->
 <div class="navbar navbar-fixed-bottom">

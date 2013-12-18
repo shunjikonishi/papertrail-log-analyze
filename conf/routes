@@ -18,6 +18,10 @@ POST    /app/:name/updateSetting          controllers.Application.updateSetting(
 POST    /app/:name/passphrase             controllers.Application.passphrase(name)
 GET     /app/:name/metrics/:date          controllers.Application.metrics(name, date)
 
+GET     /login                            controllers.RealtimeMetrics.login(code)
+GET     /rm/appList                       controllers.RealtimeMetrics.appList
+GET     /rm/metrics/:name                 controllers.RealtimeMetrics.metrics(name)
+GET     /rm/ws/:name                      controllers.RealtimeMetrics.ws(name)
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)
