@@ -58,7 +58,9 @@ object RealtimeMetrics extends Controller {
     val option = new LogSession()
     option.setTail(true)
     val url = api.createLogSession(name, option).getLogplexUrl()
-    Ok(views.html.realtimeMetrics(name)).withSession(
+    val host = request.host
+println("host: " + host)
+    Ok(views.html.realtimeMetrics(host, name)).withSession(
       request.session + ("logprex" -> url)
     )
   }

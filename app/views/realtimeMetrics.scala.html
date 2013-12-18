@@ -1,14 +1,15 @@
-@(name: String)(implicit lang:Lang)
+@(host: String, name: String)(implicit lang:Lang)
 
 @main("Papertrail Log Metrics") {
 <script>
 $(function() {
 	var MAX_ROWS = 20,
 		name = "@name",
+		host = "@host",
 		cnt = 0,
 		$message = $("#messages"),
 		$count = $("#count"),
-		ws = new WebSocket("ws://localhost:9000/rm/ws/" + name);
+		ws = new WebSocket("ws://" + host + "/rm/ws/" + name);
 	
 	ws.onmessage = function(evt) {
 		cnt++;
