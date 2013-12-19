@@ -47,11 +47,13 @@ object RealtimeMetrics extends BaseController {
   }
   
   def appList = apiAction(None) { (request, api) =>
+    implicit val language = lang(request)
     val list = api.getAppList()
     Ok(views.html.herokuAppList(Application.ARCHIVES.keySet, list))
   }
   
   def metrics(name: String) = apiAction(Some(name)) { (request, api) =>
+    implicit val language = lang(request)
     val key = request.getQueryString("key").getOrElse("memory_rss,memory_total")
     val option = new LogSession()
     option.setLines(1500)
@@ -70,6 +72,7 @@ object RealtimeMetrics extends BaseController {
   }
   
   def test(name: String) = apiAction(Some(name)) { (request, api) =>
+    implicit val language = lang(request)
     val option = new LogSession()
     option.setLines(1500)
     option.setTail(true)
