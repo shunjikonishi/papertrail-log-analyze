@@ -16,7 +16,7 @@ import scala.concurrent.Future
 
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 
 import collection.JavaConversions._;
 
@@ -28,9 +28,9 @@ import jp.co.flect.heroku.platformapi.model.LogSession;
 
 import models.MetricsWebSocket
 
-object RealtimeMetrics extends Controller {
+object RealtimeMetrics extends BaseController {
 
-  def login(code: String) = Action { implicit request =>
+  def login(code: String) = filterAction { implicit request =>
     val secret = System.getenv().get("HEROKU_OAUTH_SECRET")
     val api = PlatformApi.fromOAuth(secret, code)
     val nonce = api.getSessionNonce()
@@ -40,21 +40,10 @@ object RealtimeMetrics extends Controller {
     )
   }
   
-  private def apiAction(name: Option[String])(f: (Request[AnyContent], PlatformApi) => Result): Action[AnyContent] = Action { implicit request =>
-    /*
+  private def apiAction(name: Option[String])(f: (Request[AnyContent], PlatformApi) => Result): Action[AnyContent] = filterAction { implicit request =>
     val token = session.get("nonce").flatMap(Cache.getAs[String](_))
-    val username = sys.env.get("HEROKU_USERNAME")
-    val apikey = sys.env.get("HEROKU_AUTHTOKEN")
-    */
-    
-    val ret = session.get("nonce").flatMap(
-      Cache.getAs[String](_)
-    ).map { token =>
-      PlatformApi.fromAccessToken(token)
-    } map(f(request, _))
-    ret.getOrElse (
-      Unauthorized("You are not logined to Heroku")
-    )
+    val api = token.map(PlatformApi.fromAccessToken(_))
+    api.map(f(request, _)).getOrElse (Unauthorized("Not logged in"))
   }
   
   def appList = apiAction(None) { (request, api) =>
@@ -106,7 +95,7 @@ object RealtimeMetrics extends Controller {
   
   private def generateEnumerator(url: String)(implicit ec: ExecutionContext): Enumerator[String] = {
     implicit val pec = ec.prepare()
-    val client = new DefaultHttpClient()
+    val client = HttpClientBuilder.create().build()
     val method = new HttpGet(url)
     val response = client.execute(method)
     val reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "utf-8"))

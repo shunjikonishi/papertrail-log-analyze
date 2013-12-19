@@ -205,3 +205,8 @@ metricsSetting[ja]=log-metrics
 enableMetrics=Enable metrics chart
 enableMetrics[ja]=チャートを有効にする
 
+realtimeLogMetrics=Realtime log metrics
+realtimeLogMetrics[ja]=リアルタイムログ解析
+
+loginWithHerokuAccount=Login with Heroku account
+loginWithHerokuAccount[ja]=Herokuアカウントでログイン

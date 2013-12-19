@@ -185,7 +185,10 @@ class LogManager(val name: String, bucket: String, directory: String) {
     } else {
       val summary = new Summary(LogStatus.Found);
       CacheManager(name).put(key, summary);
-      Akka.future {
+      
+      import scala.concurrent.ExecutionContext.Implicits.global
+      scala.concurrent.Future {
+//      Akka.future {
         processCSV(client, list, key);
       }
       summary.status;
