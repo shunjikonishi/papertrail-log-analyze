@@ -84,8 +84,10 @@ object RealtimeMetrics extends Controller {
     val method = new HttpGet(url)
     val response = client.execute(method)
     val reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "utf-8"))
+    var idx = 0
     Enumerator.generateM({
-      val ret = Option(reader.readLine())
+      idx += 1
+      val ret = Option(reader.readLine()).map(idx + ": " + _)
       Future.successful(ret)
     })(pec).onDoneEnumerating(reader.close)(pec)
   }
