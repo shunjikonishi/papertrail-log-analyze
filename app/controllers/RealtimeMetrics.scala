@@ -56,10 +56,10 @@ object RealtimeMetrics extends Controller {
   
   def metrics(name: String) = apiAction { (request, api) =>
     val option = new LogSession()
+    option.setLines(1500)
     option.setTail(true)
     val url = api.createLogSession(name, option).getLogplexUrl()
     val host = request.host
-println("host: " + host)
     Ok(views.html.realtimeMetrics(host, name)).withSession(
       request.session + ("logprex" -> url)
     )
@@ -67,7 +67,7 @@ println("host: " + host)
   
   def ws(name: String) = WebSocket.using[String] { implicit request =>
     val in = Iteratee.foreach[String](println).map { _ =>
-      println("Disconnected")
+      println("Disconnected: " + name)
     }
     val out = session.get("logprex").map { url =>
       generateEnumerator(url)

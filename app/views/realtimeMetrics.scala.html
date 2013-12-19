@@ -9,6 +9,7 @@ $(function() {
 		cnt = 0,
 		$message = $("#messages"),
 		$count = $("#count"),
+		$state = $("#state"),
 		ws = new WebSocket("ws://" + host + "/rm/ws/" + name);
 	
 	ws.onmessage = function(evt) {
@@ -20,11 +21,16 @@ $(function() {
 		$message.append("<p>" + evt.data + "</p>");
 	};
 	ws.onopen = function(evt) {
+		$state.text("Ready");
 		ws.send("test");
+	}
+	ws.onclose = function(evt) {
+		$state.text("Closed");
 	}
 })
 </script>
 <h1>@name</h1>
 <h2>Lines: <span id="count"></span></h2>
+<h3>State: <span id="state"></span></h3>
 <div id="messages"></div>
 }
