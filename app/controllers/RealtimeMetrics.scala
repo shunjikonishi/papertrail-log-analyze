@@ -26,6 +26,8 @@ import java.io.InputStreamReader
 import jp.co.flect.heroku.platformapi.PlatformApi;
 import jp.co.flect.heroku.platformapi.model.LogSession;
 
+import models.MetricsWebSocket
+
 object RealtimeMetrics extends Controller {
 
   def login(code: String) = Action { implicit request =>
@@ -38,41 +40,65 @@ object RealtimeMetrics extends Controller {
     )
   }
   
-  private def apiAction(f: (Request[AnyContent], PlatformApi) => Result): Action[AnyContent] = Action { implicit request =>
+  private def apiAction(name: Option[String])(f: (Request[AnyContent], PlatformApi) => Result): Action[AnyContent] = Action { implicit request =>
+    /*
+    val token = session.get("nonce").flatMap(Cache.getAs[String](_))
+    val username = sys.env.get("HEROKU_USERNAME")
+    val apikey = sys.env.get("HEROKU_AUTHTOKEN")
+    */
+    
     val ret = session.get("nonce").flatMap(
       Cache.getAs[String](_)
     ).map { token =>
       PlatformApi.fromAccessToken(token)
     } map(f(request, _))
     ret.getOrElse (
-      Unauthorized("Oops, you are not logined to Heroku")
+      Unauthorized("You are not logined to Heroku")
     )
   }
   
-  def appList = apiAction { (request, api) =>
+  def appList = apiAction(None) { (request, api) =>
     val list = api.getAppList()
     Ok(views.html.herokuAppList(Application.ARCHIVES.keySet, list))
   }
   
-  def metrics(name: String) = apiAction { (request, api) =>
+  def metrics(name: String) = apiAction(Some(name)) { (request, api) =>
+    val key = request.getQueryString("key").getOrElse("memory_rss,memory_total")
     val option = new LogSession()
     option.setLines(1500)
     option.setTail(true)
     val url = api.createLogSession(name, option).getLogplexUrl()
     val host = request.host
-    Ok(views.html.realtimeMetrics(host, name)).withSession(
+    Ok(views.html.realtimeMetrics(host, name, key)).withSession(
       request.session + ("logprex" -> url)
     )
   }
   
   def ws(name: String) = WebSocket.using[String] { implicit request =>
+    val key = request.getQueryString("key").getOrElse("memory_rss,memory_total")
+    val mws = new MetricsWebSocket(name, session.get("logprex").get, key)
+    (mws.in, mws.out)
+  }
+  
+  def test(name: String) = apiAction(Some(name)) { (request, api) =>
+    val option = new LogSession()
+    option.setLines(1500)
+    option.setTail(true)
+    val url = api.createLogSession(name, option).getLogplexUrl()
+    val host = request.host
+    Ok(views.html.websocketTest(host, name)).withSession(
+      request.session + ("logprex" -> url)
+    )
+  }
+  
+  def testws(name: String) = WebSocket.using[String] { implicit request =>
     val in = Iteratee.foreach[String](println).map { _ =>
       println("Disconnected: " + name)
     }
     val out = session.get("logprex").map { url =>
       generateEnumerator(url)
     }.getOrElse {
-      Enumerator("Hello! " + name)
+      Enumerator("Can not read logs of " + name)
     }
     
     (in, out)
@@ -87,8 +113,17 @@ object RealtimeMetrics extends Controller {
     var idx = 0
     Enumerator.generateM({
       idx += 1
-      val ret = Option(reader.readLine()).map(idx + ": " + _)
+      val ret = try {
+        Option(reader.readLine()).map(idx + ": " + _)
+      } catch {
+        case e: Exception =>
+          e.printStackTrace
+          None
+      }
       Future.successful(ret)
-    })(pec).onDoneEnumerating(reader.close)(pec)
+    })(pec).onDoneEnumerating{
+      println("Done enumerate");
+      reader.close
+    } (pec)
   }
 }

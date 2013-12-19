@@ -71,7 +71,7 @@ object Application extends Controller {
   
   //Apply IP restriction and Basic authentication
   //and Logging
-  private def filterAction(f: Request[AnyContent] => Result): Action[AnyContent] = Action {request =>
+  def filterAction(f: Request[AnyContent] => Result): Action[AnyContent] = Action {request =>
     def ipFilter = {
       IP_FILTER match {
         case Some(filter) =>

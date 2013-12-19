@@ -33,7 +33,10 @@
 <h2>Select app</h2>
 <ul>
 @apps.map{ app =>
-	<li><a href="/rm/metrics/@app.getName()">@app.getName()</a></li>
+	<li>@app.getName() (
+		<a href="/rm/metrics/@app.getName()">Metrics</a>,
+		<a href="/rm/test/@app.getName()">Test</a>
+	)</li>
 }
 </ul>
 }

@@ -1,0 +1,45 @@
+@(host: String, name: String)(implicit lang:Lang)
+
+@main("Papertrail Log Metrics") {
+<script>
+$(function() {
+	var MAX_ROWS = 20,
+		name = "@name",
+		host = "@host",
+		cnt = 0,
+		$message = $("#messages"),
+		$count = $("#count"),
+		$state = $("#state"),
+		ws = new WebSocket("ws://" + host + "/rm/testws/" + name);
+	
+	ws.onmessage = function(evt) {
+		cnt++;
+		$count.text(cnt);
+		if (cnt > MAX_ROWS) {
+			$message.find("p:first").remove();
+		}
+		$message.append("<p>" + evt.data + "</p>");
+	};
+	ws.onopen = function(evt) {
+		$state.text("Ready");
+		ws.send("test");
+	}
+	ws.onclose = function(evt) {
+		console.log("close");
+		$state.text("Closed");
+	}
+	ws.onerror = function(evt) {
+		console.log("error");
+		$state.text("Error");
+	}
+	$("#close").click(function() {
+		ws.close();
+	});
+})
+</script>
+<h1>@name</h1>
+<h2>Lines: <span id="count"></span></h2>
+<h3>State: <span id="state"></span></h3>
+<button id="close" class="btn btn-info">Disconnect</button>
+<div id="messages"></div>
+}

@@ -171,4 +171,107 @@ if (typeof(flect.app.logmetrics) == "undefined") flect.app.logmetrics = {};
 		calendar.find("td[data-date=" + date + "]").addClass("ui-state-highlight");
 		
 	}
+	
+	flect.app.logmetrics.RealtimeMetrics = function(url, keys) {
+		function parse(str) {
+			var cols = str.split(","),
+				pgm = cols[0].match(/\[(.*)\]/)[1],
+				time = new Date(cols[1]).getTime(),
+				values = cols.slice(2);
+			return {
+				"pgm" : pgm,
+				"time" : time,
+				"values" : values
+			};
+		}
+		function getChart(name) {
+			var ret = charts[name];
+			if (!ret) {
+				var $container = $("<div/>"),
+					lines = [];
+				$container.attr("id", "chart-" + name.replace(".", "-"));
+				$container.css({
+					"height" : "400px",
+					"width" : "1000px"
+				});
+				$("#charts").append($container);
+				for (var i=0; i<keys.length; i++) {
+					lines.push({
+						"data" : [],
+						"label" : keys[i].trim()
+					});
+				}
+				ret = {
+					"name" : name,
+					"container" : $container,
+					"lines" : lines
+				}
+				charts[name] = ret;
+			}
+			return ret;
+		}
+		function doDraw(chart) {
+			drawGraph(chart.name, chart.container[0], chart.lines);
+		}
+		function makeTable(data) {
+			if (cnt > MAX_ROWS) {
+				$tbody.find("tr:first").remove();
+			}
+			var $tr = $("<tr/>"),
+				cols = data.split(",");
+			for (var i=0; i<cols.length; i++) {
+				var $td = $("<td/>");
+				$td.text(cols[i]);
+				$tr.append($td);
+			}
+			$tbody.append($tr);
+		}
+		var MAX_ROWS = 10,
+			cnt = 0,
+			$tbody = $("#tbody"),
+			$count = $("#count"),
+			$state = $("#state"),
+			$key = $("#key"),
+			drawFlag = false,
+			charts = {},
+			ws = new WebSocket(url);
+		
+		ws.onmessage = function(evt) {
+			cnt++;
+			$count.text(cnt);
+			
+			makeTable(evt.data);
+			
+			var m = parse(evt.data),
+				chart = getChart(m.pgm);
+			for (var i=0; i<keys.length; i++) {
+				var num = m.values[i];
+				if (num.length > 0) {
+					chart.lines[i].data.push([m.time, num]);
+				}
+			}
+			if (drawFlag) {
+				doDraw(chart);
+			}
+		};
+		ws.onopen = function(evt) {
+			$state.text("Ready");
+			ws.send("test");
+			setTimeout(function() {
+				for (var name in charts) {
+					doDraw(charts[name]);
+				}
+				drawFlag = true;
+			}, 2000);//Start draw graph at 2 seconds later.
+		}
+		ws.onclose = function(evt) {
+			$state.text("Closed");
+		}
+		ws.onerror = function(evt) {
+			$state.text("Error");
+		}
+		$("#updateKey").click(function() {
+			location.href = location.pathname + "?key=" + $key.val();
+		});
+	}
 })(jQuery);

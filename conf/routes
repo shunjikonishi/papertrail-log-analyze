@@ -22,6 +22,8 @@ GET     /login                            controllers.RealtimeMetrics.login(code
 GET     /rm/appList                       controllers.RealtimeMetrics.appList
 GET     /rm/metrics/:name                 controllers.RealtimeMetrics.metrics(name)
 GET     /rm/ws/:name                      controllers.RealtimeMetrics.ws(name)
+GET     /rm/test/:name                    controllers.RealtimeMetrics.test(name)
+GET     /rm/testws/:name                  controllers.RealtimeMetrics.testws(name)
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)
