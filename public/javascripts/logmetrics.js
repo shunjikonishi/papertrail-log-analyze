@@ -234,7 +234,8 @@ if (typeof(flect.app.logmetrics) == "undefined") flect.app.logmetrics = {};
 			$key = $("#key"),
 			drawFlag = false,
 			charts = {},
-			ws = new WebSocket(url);
+			ws = new WebSocket(url),
+			intervalId;
 		
 		ws.onmessage = function(evt) {
 			cnt++;
@@ -256,15 +257,18 @@ if (typeof(flect.app.logmetrics) == "undefined") flect.app.logmetrics = {};
 		};
 		ws.onopen = function(evt) {
 			$state.text("Ready");
-			ws.send("test");
 			setTimeout(function() {
 				for (var name in charts) {
 					doDraw(charts[name]);
 				}
 				drawFlag = true;
 			}, 2000);//Start draw graph at 2 seconds later.
+			intervalId = setInterval(function() {
+				ws.send("ping");
+			}, 20000);
 		}
 		ws.onclose = function(evt) {
+			clearInterval(intervalId);
 			$state.text("Closed");
 		}
 		ws.onerror = function(evt) {
