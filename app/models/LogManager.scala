@@ -266,7 +266,6 @@ class LogManager(val name: String, bucket: String, directory: String) {
     val file = new File("filecache", name + "-" + key.toDateStr + ".tsv")
     if (!file.exists) {
       val s3 = new S3Archive(ACCESS_KEY, SECRET_KEY, bucket, directory)
-println("test: " + key.toDateStr)
       s3.saveToFile(key.toDateStr, true, file)
       file.deleteOnExit
     }

@@ -1,5 +1,6 @@
 package controllers
 
+import play.api.Logger
 import play.api.cache.Cache;
 import play.api.Play.current;
 import play.api.mvc.Controller
@@ -66,6 +67,7 @@ object RealtimeMetrics extends BaseController {
   }
   
   def ws(name: String) = WebSocket.using[String] { implicit request =>
+    Logger.info("Connected: " + name)
     val key = request.getQueryString("key").getOrElse("memory_rss,memory_total")
     val mws = new MetricsWebSocket(name, session.get("logprex").get, key)
     (mws.in, mws.out)
@@ -84,8 +86,9 @@ object RealtimeMetrics extends BaseController {
   }
   
   def testws(name: String) = WebSocket.using[String] { implicit request =>
-    val in = Iteratee.foreach[String](println).map { _ =>
-      println("Disconnected: " + name)
+    Logger.info("Connected: " + name)
+    val in = Iteratee.foreach[String](Logger.info(_)).map { _ =>
+      Logger.info("Disconnected: " + name)
     }
     val out = session.get("logprex").map { url =>
       generateEnumerator(url)
@@ -114,7 +117,7 @@ object RealtimeMetrics extends BaseController {
       }
       Future.successful(ret)
     })(pec).onDoneEnumerating{
-      println("Done enumerate");
+      Logger.info("Done enumrate")
       reader.close
     } (pec)
   }

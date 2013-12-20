@@ -7,7 +7,10 @@ libraryDependencies ++= Seq(
   anorm,
   cache,
   "org.apache.httpcomponents" % "httpclient" % "4.3.1",
-  "com.amazonaws" % "aws-java-sdk" % "1.6.8"
+  "com.amazonaws" % "aws-java-sdk" % "1.6.8",
+  "com.github.mumoshu" %% "play2-memcached" % "0.4.0"
 )     
 
 play.Project.playScalaSettings
+
+resolvers += "Spy Repository" at "http://files.couchbase.com/maven2"

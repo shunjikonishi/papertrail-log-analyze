@@ -264,7 +264,8 @@ if (typeof(flect.app.logmetrics) == "undefined") flect.app.logmetrics = {};
 				drawFlag = true;
 			}, 2000);//Start draw graph at 2 seconds later.
 			intervalId = setInterval(function() {
-				ws.send("ping");
+				var name = location.pathname.substring(location.pathname.lastIndexOf('/') + 1);
+				ws.send("ping: " + name);
 			}, 20000);
 		}
 		ws.onclose = function(evt) {

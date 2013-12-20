@@ -1,5 +1,6 @@
 package models
 
+import play.api.Logger;
 import scala.io.Source
 import scala.concurrent.Future
 
@@ -22,8 +23,8 @@ class MetricsWebSocket(name: String, url: String, key: String) {
     Source.fromInputStream(response.getEntity().getContent(), "utf-8")
   }
   
-  lazy val in = Iteratee.foreach[String](println).map { _ =>
-    println("Disconnected: " + name)
+  lazy val in = Iteratee.foreach[String](Logger.info(_)).map { _ =>
+    Logger.info("Disconnected: " + name)
     source.close
   }
   
@@ -50,12 +51,12 @@ class MetricsWebSocket(name: String, url: String, key: String) {
         }
       } catch {
         case e: Exception =>
-          println("Read error: " + name + ", " + e)
+          Logger.info("Read error: " + name + ", " + e)
           None
       }
       Future.successful(ret)
     })(pec).onDoneEnumerating{
-      println("Close: " + name);
+      Logger.info("Done enumerate: " + name);
       source.close
     } (pec)
   }
