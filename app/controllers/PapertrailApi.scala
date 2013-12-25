@@ -32,9 +32,10 @@ object PapertrailApi extends BaseController {
   def createSession = filterAction { implicit request =>
     val token = getPostParam("token")
     token.map { s =>
+      val key = getPostParam("key").getOrElse("memory_rss,memory_total")
       val ptSession = UUID.randomUUID.toString
       Cache.set(ptSession, s)
-      Redirect("/pt/show").withSession(
+      Redirect("/pt/show?key=" + key).withSession(
         "pt-session" -> ptSession
       )
     }.getOrElse(

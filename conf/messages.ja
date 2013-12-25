@@ -40,6 +40,7 @@ metricsSetting=log-metrics
 packPattern=まとめるパターン
 realtimeLogMetrics=リアルタイムログ解析
 regexSetting=正規表現
+registeredApp=登録済みアプリ
 responseTime.includeConnect=接続時間を含める
 responseTimeSetting=レスポンスタイム
 setting=設定

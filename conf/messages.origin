@@ -216,3 +216,6 @@ start[ja]=開始
 
 loginWithPapertrail=Login with API token of Papertrail
 loginWithPapertrail[ja]=PapertrailのAPIトークンでログイン
+
+registeredApp=Registered App
+registeredApp[ja]=登録済みアプリ

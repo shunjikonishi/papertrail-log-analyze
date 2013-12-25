@@ -42,6 +42,7 @@ metricsSetting=log-metrics
 packPattern=Pack pattern
 realtimeLogMetrics=Realtime log metrics
 regexSetting=Regex
+registeredApp=Registered App
 responseTime.includeConnect=Include connect time
 responseTimeSetting=ResponseTime
 setting=Setting

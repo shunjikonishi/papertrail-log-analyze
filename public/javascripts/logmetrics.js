@@ -6,6 +6,7 @@ if (typeof(flect.app.logmetrics) == "undefined") flect.app.logmetrics = {};
 	var options = {
 		xaxis : {
 			mode : 'time', 
+			timeMode : "local",
 			labelsAngle : 45
 		},
 		yaxis : {
