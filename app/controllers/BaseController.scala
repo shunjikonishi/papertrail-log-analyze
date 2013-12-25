@@ -14,7 +14,9 @@ import models.LogManager
 import jp.co.flect.net.IPFilter
 
 trait BaseController extends Controller {
-  
+
+  val DEFAULT_KEYWORD = "memory_rss,memory_total"
+    
   val ARCHIVES = sys.env.filterKeys(_.startsWith("PAPERTRAIL_ARCHIVE_"))
     .map{ case(key, value) =>
       val newKey = key.substring("PAPERTRAIL_ARCHIVE_".length).toLowerCase;

@@ -1,4 +1,4 @@
-@(name: String, url: String, key: String)(implicit lang:Lang)
+@(name: String, url: String, key: String, hour: Double)(implicit lang:Lang)
 
 @main("Papertrail Log Metrics") {
 <script type='text/javascript' src='@routes.Assets.at("javascripts/ext/flotr2/flotr2.js")'></script>
@@ -7,9 +7,12 @@
 $(function() {
 	var name = "@name",
 		key = "@key",
+		hour = @hour,
 		url = "@url" + "?key=" + key;
-	
-	new flect.app.logmetrics.RealtimeMetrics(url, key.split(","));
+	if (hour > 0) {
+		url += "&hour=" + hour;
+	}
+	new flect.app.logmetrics.RealtimeMetrics(name, url, key.split(","), hour);
 })
 </script>
 <div id="header" class="navbar navbar-inverse">

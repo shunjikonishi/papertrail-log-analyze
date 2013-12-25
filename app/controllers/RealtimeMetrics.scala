@@ -55,20 +55,20 @@ object RealtimeMetrics extends BaseController {
   
   def metrics(name: String) = apiAction(Some(name)) { (request, api) =>
     implicit val language = lang(request)
-    val key = request.getQueryString("key").getOrElse("memory_rss,memory_total")
+    val key = request.getQueryString("key").filter(_.nonEmpty).getOrElse(DEFAULT_KEYWORD)
     val option = new LogSession()
     option.setLines(1500)
     option.setTail(true)
     val url = api.createLogSession(name, option).getLogplexUrl()
     val wsUrl = "ws://" + request.host + "/rm/ws/" + name
-    Ok(views.html.realtimeMetrics(name, wsUrl, key)).withSession(
+    Ok(views.html.realtimeMetrics(name, wsUrl, key, 0)).withSession(
       request.session + ("logprex" -> url)
     )
   }
   
   def ws(name: String) = WebSocket.using[String] { implicit request =>
     Logger.info("Connected: " + name)
-    val key = request.getQueryString("key").getOrElse("memory_rss,memory_total")
+    val key = request.getQueryString("key").filter(_.nonEmpty).getOrElse(DEFAULT_KEYWORD)
     val mws = new MetricsWebSocket(name, session.get("logprex").get, key)
     (mws.in, mws.out)
   }

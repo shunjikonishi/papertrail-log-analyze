@@ -192,7 +192,7 @@ object Application extends BaseController {
     bucketCheck(name) { man =>
       try {
         val file = man.unpackedLogFile(DateKey(date))
-        val key = request.getQueryString("key").getOrElse("memory_rss,memory_total")
+        val key = request.getQueryString("key").filter(_.nonEmpty).getOrElse(DEFAULT_KEYWORD)
         val keys = key.split(",").map(_.trim)
         
         val m = new LogMetricsCollector()

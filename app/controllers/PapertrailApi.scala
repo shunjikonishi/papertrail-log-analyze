@@ -32,10 +32,11 @@ object PapertrailApi extends BaseController {
   def createSession = filterAction { implicit request =>
     val token = getPostParam("token")
     token.map { s =>
-      val key = getPostParam("key").getOrElse("memory_rss,memory_total")
+      val key = getPostParam("key").filter(_.nonEmpty).getOrElse(DEFAULT_KEYWORD)
+      val hour = getPostParam("hour").getOrElse("6")
       val ptSession = UUID.randomUUID.toString
       Cache.set(ptSession, s)
-      Redirect("/pt/show?key=" + key).withSession(
+      Redirect("/pt/show?key=" + key + "&hour=" + hour).withSession(
         "pt-session" -> ptSession
       )
     }.getOrElse(
@@ -46,9 +47,10 @@ object PapertrailApi extends BaseController {
   def show = filterAction { implicit request =>
     val token = session.get("pt-session").flatMap(Cache.getAs[String](_))
     token.map { s =>
-      val key = request.getQueryString("key").getOrElse("memory_rss,memory_total")
+      val key = request.getQueryString("key").filter(_.nonEmpty).getOrElse(DEFAULT_KEYWORD)
+      val hour = request.getQueryString("hour").getOrElse("6").toDouble
       val url = "ws://" + request.host + "/pt/ws"
-      Ok(views.html.realtimeMetrics("PapertrailApi", url, key))
+      Ok(views.html.realtimeMetrics("PapertrailApi", url, key, hour))
     }.getOrElse(
       BadRequest
     )
@@ -57,13 +59,14 @@ object PapertrailApi extends BaseController {
   def ws = WebSocket.using[String] { implicit request =>
     val token = session.get("pt-session").flatMap(Cache.getAs[String](_))
     Logger.info("Connected: PpapertrailApi")
-    val key = request.getQueryString("key").getOrElse("memory_rss,memory_total")
+    val key = request.getQueryString("key").filter(_.nonEmpty).getOrElse(DEFAULT_KEYWORD)
+    val hour = request.getQueryString("hour").getOrElse("6").toDouble
     
     val in = Iteratee.foreach[String](Logger.info(_)).map { _ =>
       Logger.info("Disconnected: PapertrailApi")
     }
     val out = token.map {
-      generateEnumerator(_, key)
+      generateEnumerator(_, key, hour)
     }.getOrElse {
       Enumerator("Can not read logs")
     }
@@ -71,7 +74,7 @@ object PapertrailApi extends BaseController {
     (in, out)
   }
     
-  private def generateEnumerator(token: String, key: String)(implicit ec: ExecutionContext): Enumerator[String] = {
+  private def generateEnumerator(token: String, key: String, hour: Double)(implicit ec: ExecutionContext): Enumerator[String] = {
     implicit val pec = ec.prepare()
     
     val metrics = new LogMetrics()
@@ -79,7 +82,7 @@ object PapertrailApi extends BaseController {
     
     val client = new PapertrailClient(token)
     val initialRequest = new QueryRequest(null)
-    initialRequest.setMinDate(new Date(System.currentTimeMillis - (6 * 60 * 60 * 1000)))
+    initialRequest.setMinDate(new Date(System.currentTimeMillis - (hour * 60 * 60 * 1000).toLong))
     var result = client.query(initialRequest)
     var prevId = 0L
     Enumerator.generateM({

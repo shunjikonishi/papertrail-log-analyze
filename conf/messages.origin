@@ -219,3 +219,19 @@ loginWithPapertrail[ja]=PapertrailのAPIトークンでログイン
 
 registeredApp=Registered App
 registeredApp[ja]=登録済みアプリ
+
+period=Period
+period[ja]=期間
+
+hour0.5=30 minutes
+hour0.5[ja]=30分
+
+hour1=1 hour
+hour1[ja]=1時間
+
+hour3=3 hours
+hour3[ja]=3時間
+
+hour6=6 hours
+hour6[ja]=6時間
+

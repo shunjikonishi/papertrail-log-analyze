@@ -173,10 +173,10 @@ if (typeof(flect.app.logmetrics) == "undefined") flect.app.logmetrics = {};
 		
 	}
 	
-	flect.app.logmetrics.RealtimeMetrics = function(url, keys) {
+	flect.app.logmetrics.RealtimeMetrics = function(appName, url, keys, hour) {
 		function normalizePgm(str) {
 			var idx1 = str.indexOf('['),
-				idx2 = str.indexOf('['),
+				idx2 = str.indexOf(']'),
 				idx3 = str.indexOf('/');
 			if (idx1 != -1 && idx2 != -1) {
 				str = str.substring(idx1 + 1, idx2);
@@ -270,6 +270,7 @@ if (typeof(flect.app.logmetrics) == "undefined") flect.app.logmetrics = {};
 			}
 		};
 		ws.onopen = function(evt) {
+			var pingCount = 1;
 			$state.text("Ready");
 			setTimeout(function() {
 				for (var name in charts) {
@@ -278,8 +279,7 @@ if (typeof(flect.app.logmetrics) == "undefined") flect.app.logmetrics = {};
 				drawFlag = true;
 			}, 2000);//Start draw graph at 2 seconds later.
 			intervalId = setInterval(function() {
-				var name = location.pathname.substring(location.pathname.lastIndexOf('/') + 1);
-				ws.send("ping: " + name);
+				ws.send("ping: " + appName + "-" + pingCount++);
 			}, 20000);
 		}
 		ws.onclose = function(evt) {
@@ -290,7 +290,11 @@ if (typeof(flect.app.logmetrics) == "undefined") flect.app.logmetrics = {};
 			$state.text("Error");
 		}
 		$("#updateKey").click(function() {
-			location.href = location.pathname + "?key=" + $key.val();
+			var url = location.pathname + "?key=" + $key.val();
+			if (hour) {
+				url += "&hour=" + hour;
+			}
+			location.href =  url;
 		});
 	}
 })(jQuery);

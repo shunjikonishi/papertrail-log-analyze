@@ -78,6 +78,14 @@ fieldset li label {
 					<ul>
 						<li><label>APIToken</label><input type="text" name="token" class="input-medium"/></li>
 						<li><label>@Messages("keywords")</label><input type="text" name="key" class="input-large"/></li>
+						<li><label>@Messages("period")</label>
+							<select name="hour" class="span2">
+								<option value="0.5">@Messages("hour0.5")</option>
+								<option value="1">@Messages("hour1")</option>
+								<option value="3">@Messages("hour3")</option>
+								<option value="6" selected>@Messages("hour6")</option>
+							</select>
+						</li>
 					</ul>
 				</fieldset>
 				<button class="btn btn-info">@Messages("start")</button>
