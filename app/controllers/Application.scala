@@ -199,7 +199,7 @@ object Application extends BaseController {
         keys.foreach(m.addTarget(_))
         m.process(file);
         val map = m.getResult().mapValues[JsValue](s => JsString(s.toString))  + ("keys" -> JsArray(keys.map(JsString(_))))
-        Ok(views.html.metrics(ARCHIVES.keySet, name, key, Json.stringify(JsObject(map.toSeq)), date))
+        Ok(views.html.metrics(name, key, Json.stringify(JsObject(map.toSeq)), date))
       } catch {
         case e: Exception =>
           NotFound("Log file not found");

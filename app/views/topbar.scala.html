@@ -1,0 +1,28 @@
+@(pullRight: Html = Html(""))
+<div id="header" class="navbar navbar-inverse">
+	<div class="navbar-inner">
+		<div class="container-fluid">
+			<span class="brand"><a href="/" style="color:#FFF;">LogAnalyzer</a></span>
+			<div class="nav-collapse collapse">
+				<ul class="nav">
+					<li class="dropdown">
+						<a href="#" class="dropdown-toggle" data-toggle="dropdown">@Messages("view")<b class="caret"></b></a>
+						<ul class="dropdown-menu">
+							@controllers.Application.ARCHIVES.keySet.map{ name =>
+								<li><a href="/app/@name">@name</a></li>
+							}
+						</ul>
+					</li>
+					<li class="dropdown">
+						<a href="#" class="dropdown-toggle" data-toggle="dropdown">@Messages("language")<b class="caret"></b></a>
+						<ul class="dropdown-menu">
+							<li><a href="/i18n/setlang?lang=en">@Messages("english")</a></li>
+							<li><a href="/i18n/setlang?lang=ja">@Messages("japanese")</a></li>
+						</ul>
+					</li>
+				</ul>
+			</div><!--/.nav-collapse -->
+			@pullRight
+		</div>
+	</div>
+</div>

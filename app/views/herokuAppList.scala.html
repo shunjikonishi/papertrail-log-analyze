@@ -1,35 +1,8 @@
-@(names: scala.collection.Set[String], apps: Seq[jp.co.flect.heroku.platformapi.model.App])(implicit lang:Lang)
+@(apps: Seq[jp.co.flect.heroku.platformapi.model.App])(implicit lang:Lang)
 
 @main("Papertrail Log Metrics") {
 <script type='text/javascript' src='/i18n/@lang.language/messages.js'></script>
-<div id="header" class="navbar navbar-inverse">
-	<div class="navbar-inner">
-		<div class="container-fluid">
-			<span class="brand" href="/">LogAnalyzer</span>
-			<div class="nav-collapse collapse">
-				<ul class="nav">
-					<li class="dropdown">
-						<a href="#" class="dropdown-toggle" data-toggle="dropdown">@Messages("view")<b class="caret"></b></a>
-						<ul class="dropdown-menu">
-							<li><a href="/">@Messages("home")</a></li>
-							<li class="divider"></li>
-							@names.map{ name =>
-								<li><a href="/app/@name">@name</a></li>
-							}
-						</ul>
-					</li>
-					<li class="dropdown">
-						<a href="#" class="dropdown-toggle" data-toggle="dropdown">@Messages("language")<b class="caret"></b></a>
-						<ul class="dropdown-menu">
-							<li><a href="/i18n/setlang?lang=en">@Messages("english")</a></li>
-							<li><a href="/i18n/setlang?lang=ja">@Messages("japanese")</a></li>
-						</ul>
-					</li>
-				</ul>
-			</div><!--/.nav-collapse -->
-		</div>
-	</div>
-</div>
+@topbar()
 <h2>Select app</h2>
 <ul>
 @apps.map{ app =>

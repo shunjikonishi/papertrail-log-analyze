@@ -153,46 +153,20 @@ $(document).ready(function() {
 	app = new flect.app.loganalyzer.LogAnalyzer(name, passRequired, offset);
 });
 </script>
-<div id="header" class="navbar navbar-inverse">
-	<div class="navbar-inner">
-		<div class="container-fluid">
-			<span class="brand" href="/">@name</span>
-			<div class="nav-collapse collapse">
-				<ul class="nav">
-					<li class="dropdown">
-						<a href="#" class="dropdown-toggle" data-toggle="dropdown">@Messages("view")<b class="caret"></b></a>
-						<ul class="dropdown-menu">
-							<li><a href="/">@Messages("home")</a></li>
-							<li class="divider"></li>
-							@names.filter(_ != name).map{ name =>
-								<li><a href="/app/@name">@name</a></li>
-							}
-						</ul>
-					</li>
-					<li class="dropdown">
-						<a href="#" class="dropdown-toggle" data-toggle="dropdown">@Messages("language")<b class="caret"></b></a>
-						<ul class="dropdown-menu">
-							<li><a href="/i18n/setlang?lang=en">@Messages("english")</a></li>
-							<li><a href="/i18n/setlang?lang=ja">@Messages("japanese")</a></li>
-						</ul>
-					</li>
-				</ul>
-			</div><!--/.nav-collapse -->
-			<div class="pull-right">
-				<div class="btn-group">
-					<a class="btn btn-info dropdown-toggle" data-toggle="dropdown" href="#">@Messages("download")
-						<span class="caret"></span>
-					</a>
-					<ul class="dropdown-menu">
-						<li><a id="downloadSummary" href="#">@Messages("downloadSummary")</a></li>
-						<li><a id="downloadRaw" href="#">@Messages("downloadRaw")</a></li>
-					</ul>
-				</div>
-				<button id="setting" class="btn btn-info">@Messages("setting")</button>
-			</div>
-		</div>
+@topbar {
+<div class="pull-right">
+	<div class="btn-group">
+		<a class="btn btn-info dropdown-toggle" data-toggle="dropdown" href="#">@Messages("download")
+			<span class="caret"></span>
+		</a>
+		<ul class="dropdown-menu">
+			<li><a id="downloadSummary" href="#">@Messages("downloadSummary")</a></li>
+			<li><a id="downloadRaw" href="#">@Messages("downloadRaw")</a></li>
+		</ul>
 	</div>
+	<button id="setting" class="btn btn-info">@Messages("setting")</button>
 </div>
+}
 <div id="control">
 	<div id="calendar"></div>
 	<div id="mainChart"></div>

@@ -24,32 +24,8 @@ fieldset li label {
 }
 </style>
 <a href="https://github.com/shunjikonishi/papertrail-log-analyze"><img style="position: absolute; top: 0; right: 0; border: 0; z-index: 9999;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_green_007200.png" alt="Fork me on GitHub"></a>
-<div id="header" class="navbar navbar-inverse">
-	<div class="navbar-inner">
-		<div class="container-fluid">
-			<span class="brand" href="/">LogAnalyzer</span>
-			<div class="nav-collapse collapse">
-				<ul class="nav">
-					<li class="dropdown">
-						<a href="#" class="dropdown-toggle" data-toggle="dropdown">@Messages("view")<b class="caret"></b></a>
-						<ul class="dropdown-menu">
-							@names.map{ name =>
-								<li><a href="/app/@name">@name</a></li>
-							}
-						</ul>
-					</li>
-					<li class="dropdown">
-						<a href="#" class="dropdown-toggle" data-toggle="dropdown">@Messages("language")<b class="caret"></b></a>
-						<ul class="dropdown-menu">
-							<li><a href="/i18n/setlang?lang=en">@Messages("english")</a></li>
-							<li><a href="/i18n/setlang?lang=ja">@Messages("japanese")</a></li>
-						</ul>
-					</li>
-				</ul>
-			</div><!--/.nav-collapse -->
-		</div>
-	</div>
-</div>
+@topbar()
+
 <div class="container">
 	<!-- Main hero unit for a primary marketing message or call to action -->
 	<div class="hero-unit">

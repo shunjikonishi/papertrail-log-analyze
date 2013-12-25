@@ -50,7 +50,7 @@ object RealtimeMetrics extends BaseController {
   def appList = apiAction(None) { (request, api) =>
     implicit val language = lang(request)
     val list = api.getAppList()
-    Ok(views.html.herokuAppList(Application.ARCHIVES.keySet, list))
+    Ok(views.html.herokuAppList(list))
   }
   
   def metrics(name: String) = apiAction(Some(name)) { (request, api) =>

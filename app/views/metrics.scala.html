@@ -1,4 +1,4 @@
-@(names: scala.collection.Set[String], name: String, keyword: String, json: String, date: String)(implicit lang:Lang)
+@(name: String, keyword: String, json: String, date: String)(implicit lang:Lang)
 
 @main("Papertrail Log Metrics") {
 <link rel='stylesheet' type='text/css' href='@routes.Assets.at("javascripts/ext/fullcalendar/fullcalendar.css")' />
@@ -29,34 +29,7 @@ $(function() {
 	app = new flect.app.logmetrics.LogMetrics(date, data);
 });
 </script>
-<div id="header" class="navbar navbar-inverse">
-	<div class="navbar-inner">
-		<div class="container-fluid">
-			<span class="brand" href="/">@name</span>
-			<div class="nav-collapse collapse">
-				<ul class="nav">
-					<li class="dropdown">
-						<a href="#" class="dropdown-toggle" data-toggle="dropdown">@Messages("view")<b class="caret"></b></a>
-						<ul class="dropdown-menu">
-							<li><a href="/">@Messages("home")</a></li>
-							<li class="divider"></li>
-							@names.map{ name =>
-								<li><a href="/app/@name">@name</a></li>
-							}
-						</ul>
-					</li>
-					<li class="dropdown">
-						<a href="#" class="dropdown-toggle" data-toggle="dropdown">@Messages("language")<b class="caret"></b></a>
-						<ul class="dropdown-menu">
-							<li><a href="/i18n/setlang?lang=en">@Messages("english")</a></li>
-							<li><a href="/i18n/setlang?lang=ja">@Messages("japanese")</a></li>
-						</ul>
-					</li>
-				</ul>
-			</div><!--/.nav-collapse -->
-		</div>
-	</div>
-</div>
+@topbar()
 <div class="control">
 	<div id="calendar"></div>
 	<div id="setting">
