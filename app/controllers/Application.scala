@@ -188,12 +188,6 @@ object Application extends BaseController {
     PASSPHRASE.map(_ == pass).getOrElse(true);
   }
   
-  private def getPostParam(name: String)(implicit request: Request[AnyContent]) = {
-    request.body.asFormUrlEncoded.flatMap {
-      _.get(name).map(_.head)
-    }
-  }
-  
   def metrics(name: String, date: String) = filterAction { implicit request =>
     bucketCheck(name) { man =>
       try {

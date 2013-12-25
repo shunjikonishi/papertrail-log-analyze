@@ -173,9 +173,20 @@ if (typeof(flect.app.logmetrics) == "undefined") flect.app.logmetrics = {};
 	}
 	
 	flect.app.logmetrics.RealtimeMetrics = function(url, keys) {
+		function normalizePgm(str) {
+			var idx1 = str.indexOf('['),
+				idx2 = str.indexOf('['),
+				idx3 = str.indexOf('/');
+			if (idx1 != -1 && idx2 != -1) {
+				str = str.substring(idx1 + 1, idx2);
+			} else if (idx3 != -1) {
+				str = str.substring(idx3 + 1);
+			}
+			return str;
+		}
 		function parse(str) {
 			var cols = str.split(","),
-				pgm = cols[0].match(/\[(.*)\]/)[1],
+				pgm = normalizePgm(cols[0]),
 				time = new Date(cols[1]).getTime(),
 				values = cols.slice(2);
 			return {
@@ -238,21 +249,23 @@ if (typeof(flect.app.logmetrics) == "undefined") flect.app.logmetrics = {};
 			intervalId;
 		
 		ws.onmessage = function(evt) {
-			cnt++;
-			$count.text(cnt);
-			
-			makeTable(evt.data);
-			
-			var m = parse(evt.data),
-				chart = getChart(m.pgm);
-			for (var i=0; i<keys.length; i++) {
-				var num = m.values[i];
-				if (num.length > 0) {
-					chart.lines[i].data.push([m.time, num]);
+			if (evt.data != "None") {
+				cnt++;
+				$count.text(cnt);
+				
+				makeTable(evt.data);
+				
+				var m = parse(evt.data),
+					chart = getChart(m.pgm);
+				for (var i=0; i<keys.length; i++) {
+					var num = m.values[i];
+					if (num.length > 0) {
+						chart.lines[i].data.push([m.time, num]);
+					}
 				}
-			}
-			if (drawFlag) {
-				doDraw(chart);
+				if (drawFlag) {
+					doDraw(chart);
+				}
 			}
 		};
 		ws.onopen = function(evt) {

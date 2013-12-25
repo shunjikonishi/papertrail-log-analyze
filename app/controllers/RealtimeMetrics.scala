@@ -60,8 +60,8 @@ object RealtimeMetrics extends BaseController {
     option.setLines(1500)
     option.setTail(true)
     val url = api.createLogSession(name, option).getLogplexUrl()
-    val host = request.host
-    Ok(views.html.realtimeMetrics(host, name, key)).withSession(
+    val wsUrl = "ws://" + request.host + "/rm/ws/" + name
+    Ok(views.html.realtimeMetrics(name, wsUrl, key)).withSession(
       request.session + ("logprex" -> url)
     )
   }
@@ -79,8 +79,8 @@ object RealtimeMetrics extends BaseController {
     option.setLines(1500)
     option.setTail(true)
     val url = api.createLogSession(name, option).getLogplexUrl()
-    val host = request.host
-    Ok(views.html.websocketTest(host, name)).withSession(
+    val wsUrl = "ws://" + request.host + "/rm/testws/" + name
+    Ok(views.html.websocketTest(name, url)).withSession(
       request.session + ("logprex" -> url)
     )
   }

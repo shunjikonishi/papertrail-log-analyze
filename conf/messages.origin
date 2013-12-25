@@ -210,3 +210,9 @@ realtimeLogMetrics[ja]=リアルタイムログ解析
 
 loginWithHerokuAccount=Login with Heroku account
 loginWithHerokuAccount[ja]=Herokuアカウントでログイン
+
+start=Start
+start[ja]=開始
+
+loginWithPapertrail=Login with API token of Papertrail
+loginWithPapertrail[ja]=PapertrailのAPIトークンでログイン

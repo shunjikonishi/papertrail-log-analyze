@@ -81,4 +81,10 @@ trait BaseController extends Controller {
     }
   }
     
+  def getPostParam(name: String)(implicit request: Request[AnyContent]) = {
+    request.body.asFormUrlEncoded.flatMap {
+      _.get(name).map(_.head)
+    }
+  }
+  
 }

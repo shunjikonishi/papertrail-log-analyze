@@ -56,12 +56,18 @@ footer .copy-right {
 				<h2><a href="/app/@name">@name</a></h2>
 			}
 		</div>
-		@herokuUrl.map { url =>
 		<div class="span6">
 			<h2>@Messages("realtimeLogMetrics") <span class="badge badge-important">New!</span></h2>
-			<a href="@url" class="btn btn-info">@Messages("loginWithHerokuAccount")</a>
+			@herokuUrl.map { url =>
+				<h3>@Messages("loginWithHerokuAccount")</h3>
+				<a href="@url" class="btn btn-info">@Messages("start")</a>
+			}
+			<h3>@Messages("loginWithPapertrail")</h3>
+			<form action="/pt/start" method="post">
+				<input type="text" name="token" /><br/>
+				<button class="btn btn-info">@Messages("start")</button>
+			</form>
 		</div>
-		}
 	</div>
 </div> <!-- /container -->
 <div class="navbar navbar-fixed-bottom">

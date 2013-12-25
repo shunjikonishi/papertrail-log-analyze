@@ -1,4 +1,4 @@
-@(host: String, name: String, key: String)(implicit lang:Lang)
+@(name: String, url: String, key: String)(implicit lang:Lang)
 
 @main("Papertrail Log Metrics") {
 <script type='text/javascript' src='@routes.Assets.at("javascripts/ext/flotr2/flotr2.js")'></script>
@@ -6,9 +6,8 @@
 <script>
 $(function() {
 	var name = "@name",
-		host = "@host",
 		key = "@key",
-		url = "ws://" + host + "/rm/ws/" + name + "?key=" + key;
+		url = "@url" + "?key=" + key;
 	
 	new flect.app.logmetrics.RealtimeMetrics(url, key.split(","));
 })
