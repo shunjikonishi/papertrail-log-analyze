@@ -1,0 +1,212 @@
+@()(implicit lang:Lang)
+
+@main("Papertrail Log Analyzer") {
+<style type="text/css">
+footer .copy-right {
+	float:right;
+	margin-right: 10px;
+}
+h2 { padding-top: 40px;}
+h3 { padding-top: 40px;}
+h4 { margin-top: 10px;}
+dt { margin-top: 10px;}
+
+body { padding-top: 60px;}
+.fixed-sidebar {
+	width: 220px;
+	position: fixed;
+}
+</style>
+<script>
+$(function() {
+	$("#header").addClass("navbar-fixed-top");
+})
+</script>
+<a href="https://github.com/shunjikonishi/papertrail-log-analyze"><img style="position: fixed; top: 0; right: 0; border: 0; z-index: 9999;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_green_007200.png" alt="Fork me on GitHub"></a>
+@topbar()
+
+<div class="container">
+	<div class="row">
+		<div class="span3">
+			<ul class="nav nav-tabs nav-stacked fixed-sidebar">
+				<li><a href="#top">このアプリケーションについて</a></li>
+				<li><a href="#setup">セットアップ</a></li>
+				<li><a href="#log-analyze">ログ解析画面</a></li>
+				<li><a href="#log-metrics">ログメトリクス</a></li>
+				<li><a href="#log-realtime">リアルタイムログ解析</a></li>
+				<li><a href="#related">関連文書</a></li>
+			</ul>
+		</div>
+		<div class="span9">
+<h2 id="top">このアプリケーションについて</h2>
+<p>LogAnalyzerは<a href="http://www.flect.co.jp/" target="_blank">株式会社FLECT</a>が開発したPapertrailに転送されたログを解析するためのオープンソースアプリケーションです。</p>
+<p>GitHubから取得したソースをHerokuにpushすることで、どなたでも使用することができます。</p>
+<p>基本的にはインストール時に設定したPapertrailアーカイブ情報を用いてログを解析しますが、Heroku OAuthまたはPapertrailのAPI Tokenを利用したリアルタイムログ解析も可能です。</p>
+<p>リアルタイムログ解析は設定情報に依存しないので、どなたでもご自身のアプリをリアルタイムログ解析にかけることができます。</p>
+<div class="alert alert-info">
+<p>このアプリケーションの第一義はFLECTの開発／運用するサービスのログを解析することです。</p>
+	<p>ソース公開はされていますが、管理されたプロダクトとしてリリースしているわけではないので必要に応じて予告なく改変されることがあります。</p>
+</div>
+<h3 id="setup">セットアップ</h3>
+<h4>前提条件</h4>
+<p>このアプリはPapertrailのアーカイブしたログを解析するものなので</p>
+<ul>
+	<li>アプリのログをPapertrailに流していて、</li>
+	<li>そのログをS3上にアーカイブしていること
+</ul>
+<p>が動作させるための前提条件となります。</p>
+<p class="alert alert-info">Papertrailを使用していればアプリ自体はHeroku上で動作していなくても構いません。</p>
+<h4>Herokuにインストールすためのコマンド</h4>
+
+<p>Heroku上でこのアプリを動かすためのコマンドは以下の通りです。</p>
+<pre>
+    git clone git@@github.com:shunjikonishi/papertrail-log-analyze.git
+    heroku create
+    git push heroku master
+    heroku config:add S3_ACCESSKEY=&lt;your aws accessKey> 
+    heroku config:add S3_SECRETKEY=&lt;your aws secretKey> 
+    heroku config:add PAPERTRAIL_ARCHIVE_APP1=&lt;your S3 bucket>/papertrail/logs
+    heroku config:add TIMEZONE=Asia/Tokyo
+</pre>
+<p>必要に応じてセキュリティ強化のための追加のconfigを設定してください。</p>
+<p>Addonは必要なく、1Dynoでも十分に動作するので無料で運用することが可能です。</p>
+<h4>config設定項目</h4>
+<table class="table">
+	<tbody>
+	<tr class="success"><td colspan="2">基本設定</td></tr>
+	<tr>
+		<th>S3_ACCESSKEY</th>
+		<td>S3からログを取得するために使用するAWSのアクセスキー</td>
+	</tr>
+	<tr>
+		<th>S3_SECRETKEY</th>
+		<td>S3からログを取得するために使用するAWSのシークレットキー</td>
+	</tr>
+	<tr>
+		<th>PAPERTRAIL_ARCHIVE_&lt;APPNAME></th>
+		<td>
+			PapertrailがアーカイブしているS3バケットへのパス<br/>
+			APPNAMEの部分は画面表示に使用しているだけなので任意の名前が指定できる<br/>
+			複数設定可
+		</td>
+	</tr>
+	<tr>
+		<th>TIMEZONE</th>
+		<td>
+			時刻表示のためのタイムゾーン。省略時はUTC<br/>
+			日本であれば「Asia/Tokyo」を設定。
+		</td>
+	</tr>
+	<tr class="success"><td colspan="2">セキュリティ設定</td></tr>
+	<tr>
+		<th>ALLOWED_IP</th>
+		<td>
+			アクセスを許可するIPアドレス<br/>
+			カンマ区切りで複数設定可<br/>
+			CIDR表記(Ex. 192.168.1.0/24)が使用可能
+		</td>
+	</tr>
+	<tr>
+		<th>BASIC_AUTHENTICATION</th>
+		<td>
+			Basic認証用のユーザー名とパスワード<br/>
+			ユーザー名とパスワードを「:」で区切って設定する
+		</td>
+	</tr>
+	<tr>
+		<th>PASSPHRASE</th>
+		<td>
+			任意のパスフレーズ<br/>
+			指定すると設定画面表示、またはダウンロードの際にパスフレーズ入力を要求されるようになる
+		</td>
+	</tr>
+	<tr class="success"><td colspan="2">Heroku OAuth設定</td></tr>
+	<tr>
+		<th>HEROKU_OAUTH_ID</th>
+		<td>Herokuに登録したOAuthクライアントのID</td>
+	</tr>
+	<tr>
+		<th>HEROKU_OAUTH_SECRET</th>
+		<td>Herokuに登録したOAuthクライアントのシークレット</td>
+	</tr>
+	</tbody>
+</table>
+<p class="alert alert-info">Heroku OAuth設定はHerokuアカウントを使用したリアルタイムログ解析を行う場合にのみ使用なものなので通常は設定する必要はありません</p>
+<p>設定が適切に行われるとトップ画面にPAPERTRAIL_ARCHIVE_XXXXで設定したアプリの一覧が表示されます。</p>
+<h3 id="log-analyze">ログ解析画面</h3>
+<p>表示するログを選択するためのカレンダーと、時間帯ごとの解析結果を表示するテーブル、テーブルで選択した行のグラフから構成されます。</p>
+<p class="alert alert-info">Papertrailのログは毎日UTCの0時(日本時間 午前9時)以降にS3にアップされますが、日付が変わるとすぐにアップされるわけではなく長い時には数時間程度のタイムラグがあります。</p>
+<p>解析内容の詳細については<a href="http://www.slideshare.net/shunjikonishi/heroku-19142443" target="_blank">Slideshareにアップした資料</a>を参照してください。</p>
+<h3 id="log-metrics">ログメトリクス</h3>
+<p>設定画面でlog-metricsを有効にすると、選択した日付のログから指定の数値を拾ったグラフが表示できるようになります。</p>
+<p>ログ内で「&lt;NAME>=&lt;数値>」というフォーマットで出力されていれば何でもグラフ化することができます。</p>
+<p>デフォルトではHerokuの<a href="https://devcenter.heroku.com/articles/log-runtime-metrics" target="_blank">log-runtime-metrics</a>が出力するmemory_totalとmemory_rssがグラフ化対象となっています。</p>
+<p>グラフはプログラム別(Herokuで言えばDyno毎)に表示されます。</p>
+<h3 id="log-realtime">リアルタイムログ解析</h3>
+<p>log metricsのグラフはアーカイブされたログから表示するだけでなく、PapertrailまたはHerokuのWebAPIを使用して表示することが可能です。</p>
+<h4>Papertrail API</h4>
+<p>トップ画面のフォームで以下の項目を入力することでリアルタイムグラフが表示されます。</p>
+<table class="table">
+	<tr>
+		<th>APIToken</th>
+		<td>
+			PapertrailのAPIToken<br/>
+			PapertrailのProfile画面またはheroku configで参照できます。
+		</td>
+	</tr>
+	<tr>
+		<th>キーワード</th>
+		<td>
+			グラフ化する項目名をカンマ区切りで指定します。
+		</td>
+	</tr>
+	<tr>
+		<th>期間</th>
+		<td>
+			初期表示で何時間分のログを取ってくるかを指定します。
+		</td>
+	</tr>
+</table>
+<p class="alert alert-info">
+期間の指定は初期表示のための期間であり時間が経過してもグラフにプロットされたポイントが減ることはありません。
+</p>
+<h4>Heroku OAuth</h4>
+<p>
+リアルタイムグラフのソースとなるログはHerokuのOAuthでも取得することができます。この場合PapertrailはAddonとして追加されている必要はありません。
+</p>
+<p>
+ただしHerokuから取得できるログは直近の1500行のみなので、それなりにログ出力のあるアプリでは初期表示で数個しかグラフにプロットするポイントがないという状態になります。
+</p>
+<p>
+可能であればPapertrailのAPITokenを使用する方が良いです。
+</p>
+<p class="alert alert-info">アプリの機能として考えた場合はこのHeroku OAuthでのリアルタイムグラフの機能は外しても良いんですが、PlatformAPIのサンプルとして残しています。</p>
+<h3 id="related">関連文書</h3>
+<dl>
+<dt><a href="http://www.slideshare.net/shunjikonishi/heroku-19142443" target="_blank">Herokuのログ解析ツール</a></dt>
+<dd>このアプリでのログ解析内容の詳細説明</dd>
+
+<dt><a href="http://www.slideshare.net/shunjikonishi/ajax-app-20725783" target="_blank">お手軽AJAXアプリケーションの作り方</a></dt>
+<dd>このアプリを題材としたAjaxアプリケーションの作り方解説</dd>
+
+<dt><a href="http://blog.flect.co.jp/labo/2013/12/herokujava-37ad.html" target="_blank">HerokuとJavaのメモリのお話</a></dt>
+<dd>リアルタイム解析を作った時に書いたブログ</dd>
+
+<dt><a href="https://github.com/shunjikonishi/papertrailTool" target="_blank">PapertrailTool</a></dt>
+<dd>Papertrailのログ解析に使用しているライブラリ</dd>
+
+<dt><a href="https://github.com/shunjikonishi/heroku-platform-api" target="_blank">heroku-platform-api</a></dt>
+<dd>Herokuの<a href="https://devcenter.heroku.com/articles/platform-api-reference" target="_blank">PlatformAPI</a>のJavaラッパー</dd>
+
+<dt><a href="http://oss.flect.co.jp/" target="_blank">oss.flect.co.jp</a></dt>
+<dd>このアプリを含むFLECTのオープンソースライブラリのポータル</dd>
+		</div>
+	</div>
+</div> <!-- /container -->
+<div class="navbar navbar-fixed-bottom">
+	<footer>
+		<div class="copy-right">COPYRIGHT &copy; 2013 FLECT CO.,LTD. ALL RIGHTS RESERVED</div>
+		<div style="clear:both"></div>
+	</footer>
+</div>
+}

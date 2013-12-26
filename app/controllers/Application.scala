@@ -206,4 +206,8 @@ object Application extends BaseController {
       }
     }
   }
+  
+  def doc() = filterAction { implicit request =>
+    Ok(views.html.documentation())
+  }
 }

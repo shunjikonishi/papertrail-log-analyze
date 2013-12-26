@@ -18,6 +18,8 @@ POST    /app/:name/updateSetting          controllers.Application.updateSetting(
 POST    /app/:name/passphrase             controllers.Application.passphrase(name)
 GET     /app/:name/metrics/:date          controllers.Application.metrics(name, date)
 
+GET     /doc                              controllers.Application.doc
+
 GET     /login                            controllers.RealtimeMetrics.login(code)
 GET     /rm/appList                       controllers.RealtimeMetrics.appList
 GET     /rm/metrics/:name                 controllers.RealtimeMetrics.metrics(name)

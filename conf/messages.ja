@@ -21,6 +21,7 @@ counter.slowConnect=接続に{0}ms以上かかったリクエスト
 counter.slowRequest={0}ms以上かかったリクエスト
 counter.slowSQL=遅延SQL({0}ms以上)
 displaySetting=表示
+document=ドキュメント
 download=ダウンロード
 downloadRaw=生ログ
 downloadSummary=サマリー
