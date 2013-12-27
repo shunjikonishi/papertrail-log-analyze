@@ -16,13 +16,14 @@ body { padding-top: 60px;}
 	width: 220px;
 	position: fixed;
 }
+img { padding: 10px; border: solid 1px }
 </style>
 <script>
 $(function() {
 	$("#header").addClass("navbar-fixed-top");
 })
 </script>
-<a href="https://github.com/shunjikonishi/papertrail-log-analyze"><img style="position: fixed; top: 0; right: 0; border: 0; z-index: 9999;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_green_007200.png" alt="Fork me on GitHub"></a>
+<a href="https://github.com/shunjikonishi/papertrail-log-analyze"><img style="position: fixed; top: 0; right: 0; border: 0; z-index: 9999; padding: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_green_007200.png" alt="Fork me on GitHub"></a>
 @topbar()
 
 <div class="container">
@@ -135,15 +136,107 @@ $(function() {
 <p>設定が適切に行われるとトップ画面にPAPERTRAIL_ARCHIVE_XXXXで設定したアプリの一覧が表示されます。</p>
 <h3 id="log-analyze">ログ解析画面</h3>
 <p>表示するログを選択するためのカレンダーと、時間帯ごとの解析結果を表示するテーブル、テーブルで選択した行のグラフから構成されます。</p>
+<img src="@routes.Assets.at("images/loganalyze.png")"/>
 <p class="alert alert-info">Papertrailのログは毎日UTCの0時(日本時間 午前9時)以降にS3にアップされますが、日付が変わるとすぐにアップされるわけではなく長い時には数時間程度のタイムラグがあります。</p>
-<p>解析内容の詳細については<a href="http://www.slideshare.net/shunjikonishi/heroku-19142443" target="_blank">Slideshareにアップした資料</a>を参照してください。</p>
+<h4>ログ件数テーブル</h4>
+<p>ログ件数テーブルには条件にマッチしたログの行数が時間帯毎に表示されます。</p>
+<p>時間帯毎に表示される内容は以下です。</p>
+<ul>
+	<li>件数 - その時間帯に出力されたログの件数</li>
+	<li>分間 - その時間帯で1分間にそのログが出力された回数の最大値</li>
+	<li>秒間 - その時間帯で1秒間にそのログが出力された回数の最大値</li>
+</ul>
+<p>ここで数えられるログの条件には以下のものがあります。</p>
+<table class="table table-striped">
+	<tr>
+		<th>すべてのログ</th>
+		<td>すべてのログ</td>
+	</tr>
+	<tr>
+		<th>すべてのアクセス</th>
+		<td>アクセスログ(heroku/routerの出力ログ)</td>
+	</tr>
+	<tr>
+		<th>XXms以上かかったリクエスト</th>
+		<td>アクセスログのうちservice=xxmsが指定時間よりも大きいログ</td>
+	</tr>
+	<tr>
+		<th>接続にXXms以上かかったリクエスト</th>
+		<td>アクセスログのうちconnect=xxmsが指定時間よりも大きいログ</td>
+	</tr>
+	<tr>
+		<th>サーバーエラー(50x)</th>
+		<td>アクセスログのうちstatus=50xのログ</td>
+	</tr>
+	<tr>
+		<th>クライアントエラー(40x)</th>
+		<td>アクセスログのうちstatus=40xのログ</td>
+	</tr>
+	<tr>
+		<th>Herokuエラー別</th>
+		<td>Herokuのエラーコードが出力されているログ(コード別にカウント)</td>
+	</tr>
+	<tr>
+		<th>Dynoステート変更</th>
+		<td>再起動など「State changed」が出力されているログ</td>
+	</tr>
+	<tr>
+		<th>プログラム別</th>
+		<td>プログラム毎のログ</td>
+	</tr>
+	<tr>
+		<th>正規表現</th>
+		<td>任意の正規表現にマッチするログ</td>
+	</tr>
+</table>
+<h4>ログ内の数値の最大値と平均値テーブル</h4>
+<p>こちらのテーブルにはログ内から拾った数値の時間帯ごとの最大値と平均値が集計して表示されます。</p>
+<p>主な集計対象はレスポンスタイム(アクセスログのservice=XXms)です。</p>
+<ul>
+	<li>件数 - その時間帯に出力された集計対象のログ件数</li>
+	<li>最大 - その時間帯で出力された集計対象の値の最大値</li>
+	<li>平均 - その時間帯で出力された集計対象の値の平均値</li>
+</ul>
+<table class="table table-striped">
+	<tr>
+		<th>レスポンスタイム</th>
+		<td>
+			パス毎のレスポンスタイム(アクセスログのservice=XXms)<br/>
+			正規表現を使用して除外するパスやまとめるパスを指定できます。<br/>
+			例)<br/>
+			静的ページを除外 - /public/.*<br/>
+			商品詳細画面をまとめる - /goods/detail/\d+<br/>
+		</td>
+	</tr>
+	<tr>
+		<th>接続時間</th>
+		<td>アクセスログのconnect=XXms</td>
+	</tr>
+	<tr>
+		<th>遅延SQL</th>
+		<td>HerokuPostgresのログのduration</td>
+	</tr>
+	<tr>
+		<th>Dyno起動時間</th>
+		<td>Dynoステート変更ログのstartingからupまでの時間</td>
+	</tr>
+	<tr>
+		<th>正規表現数値</th>
+		<td>任意の正規表現から抽出した数字</td>
+	</tr>
+</table>
+<p class="alert alert-info">標準で使用できる条件の多くはHerokuのログフォーマットに依存しています。</p>
+
+<p>解析内容の詳細については<a href="http://www.slideshare.net/shunjikonishi/heroku-19142443" target="_blank">Slideshareにアップした資料</a>も参照してください。</p>
 <h3 id="log-metrics">ログメトリクス</h3>
 <p>設定画面でlog-metricsを有効にすると、選択した日付のログから指定の数値を拾ったグラフが表示できるようになります。</p>
+<img src="@routes.Assets.at("images/logmetrics.png")"/>
 <p>ログ内で「&lt;NAME>=&lt;数値>」というフォーマットで出力されていれば何でもグラフ化することができます。</p>
 <p>デフォルトではHerokuの<a href="https://devcenter.heroku.com/articles/log-runtime-metrics" target="_blank">log-runtime-metrics</a>が出力するmemory_totalとmemory_rssがグラフ化対象となっています。</p>
 <p>グラフはプログラム別(Herokuで言えばDyno毎)に表示されます。</p>
 <h3 id="log-realtime">リアルタイムログ解析</h3>
 <p>log metricsのグラフはアーカイブされたログから表示するだけでなく、PapertrailまたはHerokuのWebAPIを使用して表示することが可能です。</p>
+<img src="@routes.Assets.at("images/realtime.png")"/>
 <h4>Papertrail API</h4>
 <p>トップ画面のフォームで以下の項目を入力することでリアルタイムグラフが表示されます。</p>
 <table class="table">
