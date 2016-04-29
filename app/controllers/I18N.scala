@@ -1,25 +1,24 @@
 package controllers;
 
+import javax.inject.Inject
 import play.api.mvc.Controller;
 import play.api.mvc.Action;
-import play.api.cache.Cached;
+import play.api.mvc.Cookie;
 import play.api.Play.current;
-import play.api.i18n.Lang;
+import play.api.i18n.{I18nSupport, MessagesApi}
 
-object I18N extends Controller {
+class I18N @Inject()(val messagesApi: MessagesApi) extends Controller with I18nSupport {
 	
 	def setLang(lang: String) = Action { request =>
-		Found(request.headers.get("referer").getOrElse("/")).withLang(Lang(lang));
+		Found(request.headers.get("referer").getOrElse("/")).withCookies(Cookie(messagesApi.langCookieName, lang, httpOnly=false))
 	}
 	
 	def messages(lang: String) = Action { request =>
-		import play.api.Play;
-		import play.api.i18n.MessagesPlugin;
-		
-		val map = Play.current.plugin[MessagesPlugin]
-			.map(_.api.messages).getOrElse(Map.empty);
-		Ok(views.html.messages(map.getOrElse(lang, map("default")).filterKeys(_.startsWith("ui."))))
+    val map = messagesApi.messages
+    val langMap = map("default") ++ map.getOrElse(lang, Map.empty)
+		Ok(views.html.messages(langMap.filterKeys(_.startsWith("ui."))))
 			.as("text/javascript;charset=\"utf-8\"");
 	}
 	
+
 }

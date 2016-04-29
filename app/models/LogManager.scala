@@ -114,7 +114,7 @@ class LogManager(val name: String, bucket: String, directory: String) {
     }
   }
   
-  def csv(key: DateKey, counterType: Counter.Type)(implicit lang: Lang) = {
+  def csv(key: DateKey, counterType: Counter.Type)(implicit lang: Messages) = {
     val summary = CacheManager(name).get(key);
     summary.status match {
       case LogStatus.Ready => Some(localize(summary.csv(counterType)));
@@ -122,7 +122,7 @@ class LogManager(val name: String, bucket: String, directory: String) {
     }
   }
   
-  def fullcsv(key: DateKey)(implicit lang: Lang) = {
+  def fullcsv(key: DateKey)(implicit lang: Messages) = {
     val summary = CacheManager(name).get(key);
     summary.status match {
       case LogStatus.Ready => Some(localize(summary.fullcsv));
@@ -130,7 +130,7 @@ class LogManager(val name: String, bucket: String, directory: String) {
     }
   }
   
-  def localize(csv: String)(implicit lang: Lang) = {
+  def localize(csv: String)(implicit lang: Messages) = {
     val source = Source.fromString(csv);
     source.getLines.map { row =>
       val cols = row.split("\t");

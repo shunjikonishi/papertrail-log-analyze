@@ -6,6 +6,7 @@ import play.api.mvc.Action
 import play.api.mvc.AnyContent
 import play.api.mvc.Request
 import play.api.mvc.Result
+import play.api.i18n.{I18nSupport, Lang}
 
 import org.apache.commons.codec.binary.Base64
 
@@ -13,20 +14,11 @@ import models.LogManager
 
 import jp.co.flect.net.IPFilter
 
-trait BaseController extends Controller {
+trait BaseController extends Controller with I18nSupport {
 
   val DEFAULT_KEYWORD = "memory_rss,memory_total"
     
-  val ARCHIVES = sys.env.filterKeys(_.startsWith("PAPERTRAIL_ARCHIVE_"))
-    .map{ case(key, value) =>
-      val newKey = key.substring("PAPERTRAIL_ARCHIVE_".length).toLowerCase;
-      val (bucket, dir) = value.span(_ != '/');
-      
-      val newValue = LogManager(newKey, bucket,
-        if (dir.isEmpty) "papertrail/logs" else dir.substring(1)
-      );
-      (newKey, newValue);
-    };
+  val ARCHIVES = BaseController.ARCHIVES
   
   //IP restriction setting, if required
   private val IP_FILTER = sys.env.get("ALLOWED_IP")
@@ -89,4 +81,23 @@ trait BaseController extends Controller {
     }
   }
   
+  implicit def lang(implicit request: Request[_]): Lang = {
+    Lang(request.cookies.get("PLAY_LANG").map(_.value).getOrElse("en"))
+  }
+
+}
+
+object BaseController {
+
+  val ARCHIVES = sys.env.filterKeys(_.startsWith("PAPERTRAIL_ARCHIVE_"))
+    .map{ case(key, value) =>
+      val newKey = key.substring("PAPERTRAIL_ARCHIVE_".length).toLowerCase;
+      val (bucket, dir) = value.span(_ != '/');
+      
+      val newValue = LogManager(newKey, bucket,
+        if (dir.isEmpty) "papertrail/logs" else dir.substring(1)
+      );
+      (newKey, newValue);
+    };
+
 }

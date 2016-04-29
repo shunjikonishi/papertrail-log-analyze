@@ -16,6 +16,8 @@ import java.util.Date
 import jp.co.flect.papertrail.PapertrailClient
 import jp.co.flect.papertrail.QueryRequest
 import jp.co.flect.papertrail.metrics.LogMetrics
+import javax.inject.Inject
+import play.api.i18n.MessagesApi
 /*
 import play.api.mvc.Controller
 import play.api.mvc.Action;
@@ -27,7 +29,7 @@ import collection.JavaConversions._;
 
 */
 
-object PapertrailApi extends BaseController {
+class PapertrailApi @Inject()(val messagesApi: MessagesApi) extends BaseController {
   
   def createSession = filterAction { implicit request =>
     val token = getPostParam("token")
@@ -45,7 +47,7 @@ object PapertrailApi extends BaseController {
   }
   
   def show = filterAction { implicit request =>
-    val token = session.get("pt-session").flatMap(Cache.getAs[String](_))
+    val token = request.session.get("pt-session").flatMap(Cache.getAs[String](_))
     token.map { s =>
       val key = request.getQueryString("key").filter(_.nonEmpty).getOrElse(DEFAULT_KEYWORD)
       val hour = request.getQueryString("hour").getOrElse("6").toDouble
@@ -57,7 +59,7 @@ object PapertrailApi extends BaseController {
   }
   
   def ws = WebSocket.using[String] { implicit request =>
-    val token = session.get("pt-session").flatMap(Cache.getAs[String](_))
+    val token = request.session.get("pt-session").flatMap(Cache.getAs[String](_))
     Logger.info("Connected: PpapertrailApi")
     val key = request.getQueryString("key").filter(_.nonEmpty).getOrElse(DEFAULT_KEYWORD)
     val hour = request.getQueryString("hour").getOrElse("6").toDouble

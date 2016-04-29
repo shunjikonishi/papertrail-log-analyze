@@ -1,4 +1,4 @@
-@(name: String, passRequired: Boolean, offset: Int, metricsKeys: Option[String], names: scala.collection.Set[String])(implicit lang:Lang)
+@(name: String, passRequired: Boolean, offset: Int, metricsKeys: Option[String], names: scala.collection.Set[String])(implicit msg: Messages, lang: Lang)
 
 @main("Papertrail Log Analyzer") {
 <link rel='stylesheet' type='text/css' href='@routes.Assets.at("javascripts/ext/fullcalendar/fullcalendar.css")' />

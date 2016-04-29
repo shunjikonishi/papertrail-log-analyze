@@ -1,24 +1,30 @@
 package models;
 
-import play.api.libs.json.Json;
-import play.api.libs.json.JsValue;
-import play.api.libs.json.JsNumber;
-import play.api.libs.json.JsBoolean;
-import play.api.libs.json.JsArray;
-import play.api.libs.json.JsString;
+import play.api.libs.json._
 
-import scala.collection.mutable.ListBuffer;
-import scala.io.Source;
-import java.io.File;
-import java.util.Date;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
-import jp.co.flect.papertrail.LogAnalyzer;
-import jp.co.flect.papertrail.Counter;
+import scala.collection.mutable.ListBuffer
+import scala.io.Source
+import java.io.File
+import java.util.Date
+import java.util.regex.Pattern
+import java.util.regex.PatternSyntaxException
+import jp.co.flect.papertrail.LogAnalyzer
+import jp.co.flect.papertrail.Counter
 
 object AnalyzeSetting {
 	
-	import jp.co.flect.papertrail.counter._;
+	import jp.co.flect.papertrail.counter._
+
+	case class JsLookupWrapper(value: JsLookupResult) {
+		def convert: JsValue = {
+			value match {
+				case JsDefined(v) => v
+				case _ => JsNull
+			}
+		}
+	}
+
+	implicit def JsLookupToWrapper(v: JsLookupResult) = JsLookupWrapper(v)
 	
 	private val counterMap: Map[String, JsonWrapper => List[Counter]] = Map(
 		//LogCount
@@ -109,29 +115,33 @@ object AnalyzeSetting {
 	
 	private class JsonWrapper(value: JsValue) {
 		
+		def this(value: JsLookupResult) {
+			this(value.convert)
+		}
+		
 		def getAsStringArray(name: String) = {
-			(value \ name) match {
+			(value \ name).convert match {
 				case JsArray(v) => v.map(_.as[String]);
 				case _ => Seq[String]();
 			}
 		}
 		
 		def getAsInt(name: String, defaultValue: Int) = {
-			(value \ name) match {
+			(value \ name).convert match {
 				case JsNumber(v) => v.intValue;
 				case _ => defaultValue;
 			}
 		}
 		
 		def getAsBoolean(name: String, defaultValue: Boolean) = {
-			(value \ name) match {
+			(value \ name).convert match {
 				case JsBoolean(v) => v;
 				case _ => defaultValue;
 			}
 		}
 		
 		def getAsString(name: String, defaultValue: String) = {
-			(value \ name) match {
+			(value \ name).convert match {
 				case JsArray(v) => v.map(_.as[String]).mkString("\n");
 				case JsString(v) => v;
 				case JsNumber(v) => v.toString;
@@ -148,7 +158,7 @@ class AnalyzeSetting(setting: JsValue, val lastModified: Date) {
 	
 	def create = {
 		val ret = new LogAnalyzer();
-		(setting \ "counters") match {
+		(setting \ "counters").convert match {
 			case JsArray(v) =>
 				val list = v.foldLeft(new ListBuffer[Counter]()) { (list, el) =>
 					val name = el.as[String];
@@ -164,7 +174,7 @@ class AnalyzeSetting(setting: JsValue, val lastModified: Date) {
 	}
 	
 	def checked(name: String) = {
-		(setting \ "counters") match {
+		(setting \ "counters").convert match {
 			case JsArray(v) if v.exists(_.as[String] == name) => "checked";
 			case _ => "";
 		}
@@ -190,8 +200,8 @@ class AnalyzeSetting(setting: JsValue, val lastModified: Date) {
 	
 	def validate = {
 		val errors = new ListBuffer[String]();
-		def checkPattern(strs: JsValue) = {
-			strs match {
+		def checkPattern(strs: JsLookupResult) = {
+			strs.convert match {
 				case JsArray(array) =>
 					array.foldLeft(errors) { (list, v) =>
 						try {
@@ -208,7 +218,7 @@ class AnalyzeSetting(setting: JsValue, val lastModified: Date) {
 				case _ =>
 			}
 		}
-		(setting \ "counters") match {
+		(setting \ "counters").convert match {
 			case JsArray(array) =>
 				if (array.size == 0) {
 					errors += "Counter not found";

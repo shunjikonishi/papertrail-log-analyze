@@ -31,8 +31,10 @@ import models.LogManager.DateKey;
 import models.AnalyzeSetting;
 
 import collection.JavaConversions._;
+import javax.inject.Inject
+import play.api.i18n.MessagesApi
 
-object Application extends BaseController {
+class Application @Inject()(val messagesApi: MessagesApi) extends BaseController{
   
   //Initialize
   sys.env.get("TIMEZONE").foreach { str =>
