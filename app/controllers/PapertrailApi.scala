@@ -2,8 +2,8 @@ package controllers
 
 import play.api.Logger
 import java.util.UUID
-import play.api.cache.Cache;
-import play.api.Play.current;
+import play.api.cache.Cache
+import play.api.Play.current
 
 import play.api.libs.iteratee.Iteratee
 import play.api.libs.iteratee.Enumerator
@@ -20,12 +20,12 @@ import javax.inject.Inject
 import play.api.i18n.MessagesApi
 /*
 import play.api.mvc.Controller
-import play.api.mvc.Action;
-import play.api.mvc.AnyContent;
-import play.api.mvc.Request;
-import play.api.mvc.Result;
+import play.api.mvc.Action
+import play.api.mvc.AnyContent
+import play.api.mvc.Request
+import play.api.mvc.Result
 
-import collection.JavaConversions._;
+import collection.JavaConversions._
 
 */
 

@@ -1,11 +1,11 @@
 package models
 
-import play.api.Logger;
+import play.api.Logger
 import scala.io.Source
 import scala.concurrent.Future
 
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.client.methods.HttpGet
+import org.apache.http.impl.client.HttpClientBuilder
 import play.api.libs.iteratee.Iteratee
 import play.api.libs.iteratee.Enumerator
 
@@ -56,7 +56,7 @@ class MetricsWebSocket(name: String, url: String, key: String) {
       }
       Future.successful(ret)
     })(pec).onDoneEnumerating{
-      Logger.info("Done enumerate: " + name);
+      Logger.info("Done enumerate: " + name)
       source.close
     } (pec)
   }

@@ -1,31 +1,31 @@
 package controllers
 
 import play.api.Logger
-import play.api.cache.Cache;
-import play.api.Play.current;
+import play.api.cache.Cache
+import play.api.Play.current
 import play.api.mvc.Controller
 import play.api.mvc.WebSocket
-import play.api.mvc.Action;
-import play.api.mvc.AnyContent;
-import play.api.mvc.Request;
-import play.api.mvc.Result;
+import play.api.mvc.Action
+import play.api.mvc.AnyContent
+import play.api.mvc.Request
+import play.api.mvc.Result
 import play.api.libs.iteratee.Iteratee
 import play.api.libs.iteratee.Enumerator
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.client.HttpClient
+import org.apache.http.client.methods.HttpGet
+import org.apache.http.impl.client.HttpClientBuilder
 
-import collection.JavaConversions._;
+import collection.JavaConversions._
 
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
-import jp.co.flect.heroku.platformapi.PlatformApi;
-import jp.co.flect.heroku.platformapi.model.LogSession;
+import jp.co.flect.heroku.platformapi.PlatformApi
+import jp.co.flect.heroku.platformapi.model.LogSession
 
 import models.MetricsWebSocket
 import javax.inject.Inject

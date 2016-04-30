@@ -16,3 +16,4 @@ dist
 /filecache
 
 env.sh
+*.sublime-*
