@@ -1,7 +1,7 @@
 package controllers
 
 import play.api.Logger
-import play.api.cache.Cache
+import play.api.cache.CacheApi
 import play.api.Play.current
 import play.api.mvc.Controller
 import play.api.mvc.WebSocket
@@ -31,20 +31,20 @@ import models.MetricsWebSocket
 import javax.inject.Inject
 import play.api.i18n.MessagesApi
 
-class RealtimeMetrics @Inject()(val messagesApi: MessagesApi) extends BaseController {
+class RealtimeMetrics @Inject()(val messagesApi: MessagesApi, cache: CacheApi) extends BaseController {
 
   def login(code: String) = filterAction { implicit request =>
     val secret = System.getenv().get("HEROKU_OAUTH_SECRET")
     val api = PlatformApi.fromOAuth(secret, code)
     val nonce = api.getSessionNonce()
-    Cache.set(nonce, api.getAccessToken())
+    cache.set(nonce, api.getAccessToken())
     Redirect("/rm/appList").withSession(
       "nonce" -> nonce
     )
   }
   
   private def apiAction(name: Option[String])(f: (Request[AnyContent], PlatformApi) => Result): Action[AnyContent] = filterAction { implicit request =>
-    val token = request.session.get("nonce").flatMap(Cache.getAs[String](_))
+    val token = request.session.get("nonce").flatMap(cache.get[String](_))
     val api = token.map(PlatformApi.fromAccessToken(_))
     api.map(f(request, _)).getOrElse (Unauthorized("Not logged in"))
   }

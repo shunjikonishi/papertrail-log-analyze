@@ -26,6 +26,8 @@ import com.amazonaws.services.s3.model.S3Object
 import com.amazonaws.services.s3.model.ObjectListing
 import com.amazonaws.services.s3.model.ObjectMetadata
 
+import scala.concurrent.duration._
+
 object LogManager {
   
   val ACCESS_KEY = sys.env("S3_ACCESSKEY")
@@ -142,7 +144,8 @@ class LogManager(val name: String, bucket: String, directory: String) {
             val keys = name.trim.split(",")
             keys.toList match {
               case x :: Nil => blank + Messages(x)
-              case x :: xs => blank + Messages(x, xs: _*)
+              case x :: xs  => blank + Messages(x, xs: _*)
+              case Nil      => blank + Messages(name.trim)
             }
           } else {
             name
@@ -277,7 +280,7 @@ object CacheManager {
   
   import LogManager.LogStatus
   
-  private val CACHE_DURATION = 60 * 60
+  private val CACHE_DURATION = 60 * 60 seconds
   
   case class Summary(val status: LogStatus, val timestamp: Date = new Date(), countCsv: String = null, timeCsv: String = null) {
     
@@ -297,9 +300,8 @@ class CacheManager(name: String) {
   import CacheManager._
   import LogManager.DateKey
   import LogManager.LogStatus
-  
+
   def get(key: DateKey) = Cache.getOrElse[Summary](name + "-" + key.toDateStr) { Summary(LogStatus.Unprocessed);}
   def put(key: DateKey, data: Summary) = Cache.set(name + "-" + key.toDateStr, data, CACHE_DURATION)
   def remove(key: DateKey) = Cache.remove(name + "-" + key.toDateStr)
 }
-

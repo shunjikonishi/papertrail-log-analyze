@@ -2,7 +2,7 @@ package controllers
 
 import play.api.Logger
 import java.util.UUID
-import play.api.cache.Cache
+import play.api.cache.CacheApi
 import play.api.Play.current
 
 import play.api.libs.iteratee.Iteratee
@@ -29,7 +29,7 @@ import collection.JavaConversions._
 
 */
 
-class PapertrailApi @Inject()(val messagesApi: MessagesApi) extends BaseController {
+class PapertrailApi @Inject()(val messagesApi: MessagesApi, cache: CacheApi) extends BaseController {
   
   def createSession = filterAction { implicit request =>
     val token = getPostParam("token")
@@ -37,7 +37,7 @@ class PapertrailApi @Inject()(val messagesApi: MessagesApi) extends BaseControll
       val key = getPostParam("key").filter(_.nonEmpty).getOrElse(DEFAULT_KEYWORD)
       val hour = getPostParam("hour").getOrElse("6")
       val ptSession = UUID.randomUUID.toString
-      Cache.set(ptSession, s)
+      cache.set(ptSession, s)
       Redirect("/pt/show?key=" + key + "&hour=" + hour).withSession(
         "pt-session" -> ptSession
       )
@@ -47,7 +47,7 @@ class PapertrailApi @Inject()(val messagesApi: MessagesApi) extends BaseControll
   }
   
   def show = filterAction { implicit request =>
-    val token = request.session.get("pt-session").flatMap(Cache.getAs[String](_))
+    val token = request.session.get("pt-session").flatMap(cache.get[String](_))
     token.map { s =>
       val key = request.getQueryString("key").filter(_.nonEmpty).getOrElse(DEFAULT_KEYWORD)
       val hour = request.getQueryString("hour").getOrElse("6").toDouble
@@ -59,7 +59,7 @@ class PapertrailApi @Inject()(val messagesApi: MessagesApi) extends BaseControll
   }
   
   def ws = WebSocket.using[String] { implicit request =>
-    val token = request.session.get("pt-session").flatMap(Cache.getAs[String](_))
+    val token = request.session.get("pt-session").flatMap(cache.get[String](_))
     Logger.info("Connected: PpapertrailApi")
     val key = request.getQueryString("key").filter(_.nonEmpty).getOrElse(DEFAULT_KEYWORD)
     val hour = request.getQueryString("hour").getOrElse("6").toDouble
