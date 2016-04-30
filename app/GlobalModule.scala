@@ -1,12 +1,13 @@
-import play.api.GlobalSettings
-import play.api.Application
+import javax.inject.Singleton
 import java.io.File
 import jp.co.flect.util.ResourceGen
+import com.google.inject.AbstractModule
 
-object Global extends GlobalSettings {
-	
-	override def onStart(app: Application) {
-		//Generate messages and messages.ja
+@Singleton
+class OnStartModule {
+  onStart()
+
+  def onStart(): Unit = {
 		val defaults = new File("conf/messages")
 		val origin = new File("conf/messages.origin")
 		if (origin.lastModified > defaults.lastModified) {
@@ -14,6 +15,9 @@ object Global extends GlobalSettings {
 			gen.process(origin)
 		}
 		new File("filecache").mkdir()
-	}
-	
+  }
+}
+
+class GlobalModule extends AbstractModule {
+  override def configure(): Unit = bind(classOf[OnStartModule]).asEagerSingleton()
 }
