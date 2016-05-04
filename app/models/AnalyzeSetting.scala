@@ -47,7 +47,11 @@ object AnalyzeSetting {
 		}, "dynoStateChanged" -> { option =>
 			new DynoStateChangedCounter("counter.dynoStateChanged") :: Nil
 		}, "program" -> { option =>
-			new ProgramCounter("counter.program") :: Nil
+			val counter = new ProgramCounter("counter.program")
+			counter.addPattern("app/postgres", "app/postgres\\..*")
+			counter.addPattern("app/scheduler", "app/scheduler\\..*")
+			counter.addPattern("heroku/scheduler", "heroku/scheduler\\..*")
+			counter :: Nil
 		}, "regexCount" -> { option =>
 			(option.getAsStringArray("pattern").foldLeft(List[Counter]()) { (list, str) =>
 				str.split("=").toList match {
