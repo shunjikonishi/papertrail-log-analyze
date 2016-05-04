@@ -2,8 +2,8 @@ package controllers
 
 import play.api.Logger
 import java.util.UUID
-import play.api.cache.Cache;
-import play.api.Play.current;
+import play.api.cache.CacheApi
+import play.api.Play.current
 
 import play.api.libs.iteratee.Iteratee
 import play.api.libs.iteratee.Enumerator
@@ -16,18 +16,20 @@ import java.util.Date
 import jp.co.flect.papertrail.PapertrailClient
 import jp.co.flect.papertrail.QueryRequest
 import jp.co.flect.papertrail.metrics.LogMetrics
+import javax.inject.Inject
+import play.api.i18n.MessagesApi
 /*
 import play.api.mvc.Controller
-import play.api.mvc.Action;
-import play.api.mvc.AnyContent;
-import play.api.mvc.Request;
-import play.api.mvc.Result;
+import play.api.mvc.Action
+import play.api.mvc.AnyContent
+import play.api.mvc.Request
+import play.api.mvc.Result
 
-import collection.JavaConversions._;
+import collection.JavaConversions._
 
 */
 
-object PapertrailApi extends BaseController {
+class PapertrailApi @Inject()(val messagesApi: MessagesApi, cache: CacheApi) extends BaseController {
   
   def createSession = filterAction { implicit request =>
     val token = getPostParam("token")
@@ -35,7 +37,7 @@ object PapertrailApi extends BaseController {
       val key = getPostParam("key").filter(_.nonEmpty).getOrElse(DEFAULT_KEYWORD)
       val hour = getPostParam("hour").getOrElse("6")
       val ptSession = UUID.randomUUID.toString
-      Cache.set(ptSession, s)
+      cache.set(ptSession, s)
       Redirect("/pt/show?key=" + key + "&hour=" + hour).withSession(
         "pt-session" -> ptSession
       )
@@ -45,7 +47,7 @@ object PapertrailApi extends BaseController {
   }
   
   def show = filterAction { implicit request =>
-    val token = session.get("pt-session").flatMap(Cache.getAs[String](_))
+    val token = request.session.get("pt-session").flatMap(cache.get[String](_))
     token.map { s =>
       val key = request.getQueryString("key").filter(_.nonEmpty).getOrElse(DEFAULT_KEYWORD)
       val hour = request.getQueryString("hour").getOrElse("6").toDouble
@@ -57,7 +59,7 @@ object PapertrailApi extends BaseController {
   }
   
   def ws = WebSocket.using[String] { implicit request =>
-    val token = session.get("pt-session").flatMap(Cache.getAs[String](_))
+    val token = request.session.get("pt-session").flatMap(cache.get[String](_))
     Logger.info("Connected: PpapertrailApi")
     val key = request.getQueryString("key").filter(_.nonEmpty).getOrElse(DEFAULT_KEYWORD)
     val hour = request.getQueryString("hour").getOrElse("6").toDouble

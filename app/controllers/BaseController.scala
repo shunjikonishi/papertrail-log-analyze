@@ -6,6 +6,7 @@ import play.api.mvc.Action
 import play.api.mvc.AnyContent
 import play.api.mvc.Request
 import play.api.mvc.Result
+import play.api.i18n.{I18nSupport, Lang}
 
 import org.apache.commons.codec.binary.Base64
 
@@ -13,32 +14,23 @@ import models.LogManager
 
 import jp.co.flect.net.IPFilter
 
-trait BaseController extends Controller {
+trait BaseController extends Controller with I18nSupport {
 
   val DEFAULT_KEYWORD = "memory_rss,memory_total"
     
-  val ARCHIVES = sys.env.filterKeys(_.startsWith("PAPERTRAIL_ARCHIVE_"))
-    .map{ case(key, value) =>
-      val newKey = key.substring("PAPERTRAIL_ARCHIVE_".length).toLowerCase;
-      val (bucket, dir) = value.span(_ != '/');
-      
-      val newValue = LogManager(newKey, bucket,
-        if (dir.isEmpty) "papertrail/logs" else dir.substring(1)
-      );
-      (newKey, newValue);
-    };
+  val ARCHIVES = BaseController.ARCHIVES
   
   //IP restriction setting, if required
   private val IP_FILTER = sys.env.get("ALLOWED_IP")
-    .map(IPFilter.getInstance(_));
+    .map(IPFilter.getInstance(_))
   
   //Basic authentication setting, if required
   private val BASIC_AUTH = sys.env.get("BASIC_AUTHENTICATION")
     .filter(_.split(":").length == 2)
     .map { str =>
-      val strs = str.split(":");
-      (strs(0), strs(1));
-    };
+      val strs = str.split(":")
+      (strs(0), strs(1))
+    }
   
   //Apply IP restriction and Basic authentication
   //and Logging
@@ -46,10 +38,10 @@ trait BaseController extends Controller {
     def ipFilter = {
       IP_FILTER match {
         case Some(filter) =>
-          val ip = request.headers.get("x-forwarded-for").getOrElse(request.remoteAddress);
-          filter.allow(ip);
+          val ip = request.headers.get("x-forwarded-for").getOrElse(request.remoteAddress)
+          filter.allow(ip)
         case None =>
-          true;
+          true
       }
     }
     def basicAuth = {
@@ -58,28 +50,28 @@ trait BaseController extends Controller {
           request.headers.get("Authorization").map { auth =>
             auth.split(" ").drop(1).headOption.map { encoded =>
               new String(Base64.decodeBase64(encoded.getBytes)).split(":").toList match {
-                case u :: p :: Nil => u == username && password == p;
-                case _ => false;
+                case u :: p :: Nil => u == username && password == p
+                case _ => false
               }
-            }.getOrElse(false);
+            }.getOrElse(false)
           }.getOrElse {
-            false;
+            false
           }
         case None =>
-          true;
+          true
       }
     }
-    val t = System.currentTimeMillis();
+    val t = System.currentTimeMillis()
     try {
       if (!ipFilter) {
-        Forbidden;
+        Forbidden
       } else if (!basicAuth) {
-          Unauthorized.withHeaders("WWW-Authenticate" -> "Basic realm=\"Secured\"");
+          Unauthorized.withHeaders("WWW-Authenticate" -> "Basic realm=\"Secured\"")
       } else {
-        f(request);
+        f(request)
       }
     } finally {
-      Logger.info(request.path + " (" + (System.currentTimeMillis() - t) + "ms)");
+      Logger.info(request.path + " (" + (System.currentTimeMillis() - t) + "ms)")
     }
   }
     
@@ -89,4 +81,23 @@ trait BaseController extends Controller {
     }
   }
   
+  implicit def lang(implicit request: Request[_]): Lang = {
+    Lang(request.cookies.get("PLAY_LANG").map(_.value).getOrElse("en"))
+  }
+
+}
+
+object BaseController {
+
+  val ARCHIVES = sys.env.filterKeys(_.startsWith("PAPERTRAIL_ARCHIVE_"))
+    .map{ case(key, value) =>
+      val newKey = key.substring("PAPERTRAIL_ARCHIVE_".length).toLowerCase
+      val (bucket, dir) = value.span(_ != '/')
+      
+      val newValue = LogManager(newKey, bucket,
+        if (dir.isEmpty) "papertrail/logs" else dir.substring(1)
+      )
+      (newKey, newValue)
+    }
+
 }

@@ -1,4 +1,4 @@
-@(name: String, passRequired: Boolean, offset: Int, metricsKeys: Option[String], names: scala.collection.Set[String])(implicit lang:Lang)
+@(name: String, passRequired: Boolean, offset: Int, metricsKeys: Option[String], names: scala.collection.Set[String])(implicit msg: Messages, lang: Lang)
 
 @main("Papertrail Log Analyzer") {
 <link rel='stylesheet' type='text/css' href='@routes.Assets.at("javascripts/ext/fullcalendar/fullcalendar.css")' />
@@ -134,6 +134,10 @@ fieldset legend {
 
 .setting ol li span {
 	display: inline-block;
+}
+
+.fc-day:hover {
+	cursor: pointer;
 }
 </style>
 <script type='text/javascript' src='/i18n/@lang.language/messages.js'></script>
