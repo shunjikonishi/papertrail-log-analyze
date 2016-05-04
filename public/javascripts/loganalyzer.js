@@ -206,7 +206,7 @@ if (typeof(flect.app.loganalyzer) == "undefined") flect.app.loganalyzer = {};
 			"gridview" : true,
 			"caption" : MSG[kind.name + "Grid"],
 			"shrinkToFit" : false,
-			"height" : 800,
+			"height" : 400,
 			"loadComplete" : function(data) {
 				for (var i=0; i<data.rows.length; i++) {
 					var cells = data.rows[i].cell;
